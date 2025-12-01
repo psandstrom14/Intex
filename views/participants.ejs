@@ -69,22 +69,19 @@
                 <div class="filter-row">
                     <!-- Basic Search -->
                     <div class="filter-item" style="flex: 2;">
-                        <label class="form-label">Quick Search</label>
+                        <label class="form-label">Quick Search (First Name)</label>
                         <div style="display: flex; gap: 0.5rem;">
-                            <select id="quickSearchColumn" class="form-control">
-                                <option value="name">Name</option>
-                                <option value="email">Email</option>
-                                <option value="phone">Phone</option>
-                                <option value="status">Status</option>
-                            </select>
-                            <input type="text" id="quickSearch" class="form-control" placeholder="Search..." style="flex: 2;">
+                            <input type="text" id="quickSearch" class="form-control" placeholder="Search by first name...">
+                            <button class="btn btn-primary" id="quickSearchBtn" style="white-space: nowrap;">
+                                Search
+                            </button>
                         </div>
                     </div>
 
                     <!-- Advanced Search Toggle -->
                     <div class="filter-item" style="flex: 0.8;">
                         <label class="form-label">&nbsp;</label>
-                        <button class="btn btn-secondary btn-small" id="toggleAdvancedSearch" style="width: 100%;">
+                        <button class="btn btn-secondary" id="toggleAdvancedSearch" style="width: 100%;">
                             Advanced Search
                         </button>
                     </div>
@@ -97,12 +94,15 @@
                         <div class="filter-item">
                             <label class="form-label">Search Field</label>
                             <select id="advancedSearchColumn" class="form-control">
-                                <option value="">Select field...</option>
-                                <option value="name">Name</option>
+                                <option value="">All Fields</option>
+                                <option value="firstname">First Name</option>
+                                <option value="lastname">Last Name</option>
                                 <option value="email">Email</option>
                                 <option value="phone">Phone</option>
-                                <option value="status">Status</option>
-                                <option value="date">Date Added</option>
+                                <option value="city">City</option>
+                                <option value="state">State</option>
+                                <option value="school">School/Employer</option>
+                                <option value="interest">Field of Interest</option>
                             </select>
                         </div>
                         <div class="filter-item" style="flex: 2;">
@@ -112,10 +112,13 @@
                         <div class="filter-item">
                             <label class="form-label">Sort By</label>
                             <select id="sortColumn" class="form-control">
-                                <option value="name">Name</option>
+                                <option value="firstname">First Name</option>
+                                <option value="lastname">Last Name</option>
                                 <option value="email">Email</option>
                                 <option value="phone">Phone</option>
-                                <option value="date">Date Added</option>
+                                <option value="dob">Date of Birth</option>
+                                <option value="city">City</option>
+                                <option value="donations">Total Donations</option>
                             </select>
                         </div>
                         <div class="filter-item" style="flex: 0.5;">
@@ -176,7 +179,8 @@
                             <th>Date of Birth</th>
                             <th>City</th>
                             <th>State</th>
-                            <th>School or Employeer</th>
+                            <th>Zip</th>
+                            <th>School/Employer</th>
                             <th>Field of Interest</th>
                             <th>Total Donations</th>
                             <th style="text-align: center;">Actions</th>
@@ -190,21 +194,23 @@
                                     <td>
                                         <input type="checkbox" class="row-checkbox" value="<%= participant.id %>">
                                     </td>
-                                    <td><%= participant.name %></td>
-                                    <td><%= participant.email %></td>
-                                    <td><%= participant.phone %></td>
-                                    <td>
-                                        <span class="badge badge-<%= participant.status === 'Active' ? 'success' : 'secondary' %>">
-                                            <%= participant.status %>
-                                        </span>
-                                    </td>
-                                    <td><%= participant.dateAdded %></td>
+                                    <td><%= participant.ParticipantFirstName %></td>
+                                    <td><%= participant.ParticipantLastName %></td>
+                                    <td><%= participant.ParticipantEmail %></td>
+                                    <td><%= participant.ParticipantPhone %></td>
+                                    <td><%= participant.ParticipantDOB %></td>
+                                    <td><%= participant.ParticipantCity %></td>
+                                    <td><%= participant.ParticipantState %></td>
+                                    <td><%= participant.ParticipantZip %></td>
+                                    <td><%= participant.ParticipantSchoolOrEmployer %></td> 
+                                    <td><%= participant.ParticipantFieldOfInterest %></td> 
+                                    <td>$<%= participant.TotalDonations %></td>
                                     <td style="text-align: center;">
                                         <div class="row-actions" style="justify-content: center;">
                                             <button class="btn btn-secondary btn-small" onclick="window.location.href='/participants/edit/<%= participant.id %>'">
                                                 Edit
                                             </button>
-                                            <button class="btn btn-danger btn-small" onclick="confirmDelete('<%= participant.id %>', '<%= participant.name %>')">
+                                            <button class="btn btn-danger btn-small" onclick="confirmDelete('<%= participant.id %>', '<%= participant.ParticipantFirstName %> <%= participant.ParticipantLastName %>')">
                                                 Delete
                                             </button>
                                         </div>
@@ -213,7 +219,7 @@
                             <% }); %>
                         <% } else { %>
                             <tr>
-                                <td colspan="7" style="text-align: center; padding: 3rem; color: #999;">
+                                <td colspan="13" style="text-align: center; padding: 3rem; color: #999;">
                                     No participants found. Click "Add Participant" to get started.
                                 </td>
                             </tr>
@@ -425,42 +431,34 @@
             }
         }
 
-        // Quick Search (client-side filtering)
-        document.getElementById('quickSearch').addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const searchColumn = document.getElementById('quickSearchColumn').value;
+        // Quick Search (client-side filtering - First Name only)
+        const quickSearchInput = document.getElementById('quickSearch');
+        const quickSearchBtn = document.getElementById('quickSearchBtn');
+        
+        function performQuickSearch() {
+            const searchTerm = quickSearchInput.value.toLowerCase();
             const rows = document.querySelectorAll('tbody tr[data-id]');
             
             rows.forEach(row => {
-                let textToSearch = '';
+                // First Name is in column index 1 (after checkbox)
+                const firstName = row.cells[1]?.textContent.toLowerCase() || '';
                 
-                switch(searchColumn) {
-                    case 'name':
-                        textToSearch = row.cells[1]?.textContent.toLowerCase() || '';
-                        break;
-                    case 'email':
-                        textToSearch = row.cells[2]?.textContent.toLowerCase() || '';
-                        break;
-                    case 'phone':
-                        textToSearch = row.cells[3]?.textContent.toLowerCase() || '';
-                        break;
-                    case 'status':
-                        textToSearch = row.cells[4]?.textContent.toLowerCase() || '';
-                        break;
-                }
-                
-                if (textToSearch.includes(searchTerm)) {
+                if (firstName.includes(searchTerm)) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
                 }
             });
-        });
-
-        // Update quick search when column changes
-        document.getElementById('quickSearchColumn').addEventListener('change', function() {
-            // Trigger search with current input value
-            document.getElementById('quickSearch').dispatchEvent(new Event('input'));
+        }
+        
+        // Search on button click
+        quickSearchBtn.addEventListener('click', performQuickSearch);
+        
+        // Also search on Enter key
+        quickSearchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performQuickSearch();
+            }
         });
 
         // Sort functionality (will trigger a server request)

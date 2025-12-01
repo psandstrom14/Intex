@@ -14,7 +14,7 @@ const knex = require("knex")({ // KNEX: allows you to work with SQL databases
         host: "localhost",
         user: "postgres",
         password: "admin",
-        database: "database_name", // put database name
+        database: "ella_rising", // put database name
         port: 5432
     }
 });
@@ -58,9 +58,15 @@ app.get('/users',(req,res) => {
 
 // PARTICIPANT MAINTENANCE PAGE: 
 app.get('/participants',(req,res) => {
-    res.render('participants', { 
-        message: 'John Doe has been deleted',
-        messageType: 'success' // or 'danger', 'warning', 'info'
+    knex.select().from('participants').then(table => { 
+        res.render("participants", {
+            participants: table,
+            message: 'John Doe has been deleted',
+            messageType: 'success'  // or 'danger', 'warning', 'info'
+        }); 
+    }).catch(err => { 
+            console.log(err); 
+            res.status(500).json({err});
     });
 });
 
