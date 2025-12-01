@@ -58,7 +58,10 @@ app.get('/users',(req,res) => {
 
 // PARTICIPANT MAINTENANCE PAGE: 
 app.get('/participants',(req,res) => {
-    res.render("participants"); 
+    res.render('participants', { 
+        message: 'John Doe has been deleted',
+        messageType: 'success' // or 'danger', 'warning', 'info'
+    });
 });
 
 // EVENT MAINTENANCE PAGE: 
