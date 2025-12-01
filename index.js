@@ -50,9 +50,34 @@ app.get('/login',(req,res) => {
     res.render("login"); 
 });
 
-// DONATE NOW PAGE: 
-app.get('/donate_now',(req,res) => {
-    res.render("donate_now"); 
+// USER MAINTENANCE PAGE: 
+app.get('/users',(req,res) => {
+    res.render("users"); 
+});
+
+// PARTICIPANT MAINTENANCE PAGE: 
+app.get('/participants',(req,res) => {
+    res.render("participants"); 
+});
+
+// EVENT MAINTENANCE PAGE: 
+app.get('/events',(req,res) => {
+    res.render("events"); 
+});
+
+// SURVEY MAINTENANCE PAGE: 
+app.get('/surveys',(req,res) => {
+    res.render("surveys"); 
+});
+
+// MILESTONES MAINTENANCE PAGE: 
+app.get('/milestones',(req,res) => {
+    res.render("milestones"); 
+});
+
+// DONATINOS MAINTENANCE PAGE: 
+app.get('/donations',(req,res) => {
+    res.render("donations"); 
 });
 
 // START TO LISTEN (& tell command line)
