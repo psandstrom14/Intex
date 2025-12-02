@@ -2,6 +2,9 @@
 <!--This page will display surveys, and allow CRUD (for managers) + Search/Filter/Sort capabilities.-->
 <!--This page will only be visible to users who are logged in.-->
 
+<!--Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom-->
+<!--Surveys page: search, filter, sort, bulk edit/delete-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,13 +26,13 @@
                 <li><a href="/donate_now">Donate Now</a></li>
                 <li class="dropdown">
                     <span class="dropdown-toggle">
-                        <a href="#" class="selected-nav">Pages ▾</a>
+                        <a href="#">Pages ▾</a>
                     </span>
                     <ul class="dropdown-menu">
                         <li><a href="/users">Users</a></li>
                         <li><a href="/participants">Participants</a></li>
                         <li><a href="/events">Events</a></li>
-                        <li><a href="/surveys">Surveys</a></li>
+                        <li><a href="/surveys" class="selected-nav">Surveys</a></li>
                         <li><a href="/milestones">Milestones</a></li>
                         <li><a href="/donations">Donations</a></li>
                     </ul>
@@ -43,7 +46,7 @@
     <section class="hero">
         <div class="hero-content">
             <h1>Surveys</h1>
-            <p>View and manage survey responses</p>
+            <p>Review and manage feedback from Ella Rises events</p>
         </div>
     </section>
 
@@ -60,35 +63,29 @@
             <!-- Header -->
             <div class="table-header">
                 <h2 class="table-title">Ella Rises Surveys</h2>
-                <!--UPDATE LATER: "add" button should only show for managers-->
                 <div class="table-actions">
-                    <button class="btn btn-add"><a href="/add/surveys">+ Add Survey</a></button>
+                    <button class="btn btn-add">
+                        <a href="/add/surveys">+ Add Survey</a>
+                    </button>
                 </div>
             </div>
 
-            <!-- Search and Filter Section -->
+            <!-- Search + Filters in ONE form (GET) -->
             <div class="filter-section">
-                <!-- SEARCH FORM -->
-                <form id="searchForm" method="POST" action="/filter-surveys">
+                <form id="surveysForm" method="GET" action="/surveys">
                     <div class="filter-row">
-                        <!-- Search Column Dropdown -->
+                        <!-- Search Dropdown -->
                         <div class="filter-item filter-column">
                             <select name="searchColumn" id="searchColumn" class="form-control">
-                                <option value="survey_id" <%= (typeof filters !== 'undefined' && filters.searchColumn === 'survey_id') ? 'selected' : (!filters || !filters.searchColumn) ? 'selected' : '' %>>Survey ID</option>
-                                <option value="participant_event_id" <%= (typeof filters !== 'undefined' && filters.searchColumn === 'participant_event_id') ? 'selected' : '' %>>Participant Event ID</option>
-                                <option value="survey_satisfaction_score" <%= (typeof filters !== 'undefined' && filters.searchColumn === 'survey_satisfaction_score') ? 'selected' : '' %>>Satisfaction Score</option>
-                                <option value="survey_usefulness_score" <%= (typeof filters !== 'undefined' && filters.searchColumn === 'survey_usefulness_score') ? 'selected' : '' %>>Usefulness Score</option>
-                                <option value="survey_instructor_score" <%= (typeof filters !== 'undefined' && filters.searchColumn === 'survey_instructor_score') ? 'selected' : '' %>>Instructor Score</option>
-                                <option value="survey_recommendation_score" <%= (typeof filters !== 'undefined' && filters.searchColumn === 'survey_recommendation_score') ? 'selected' : '' %>>Recommendation Score</option>
-                                <option value="survey_overall_score" <%= (typeof filters !== 'undefined' && filters.searchColumn === 'survey_overall_score') ? 'selected' : '' %>>Overall Score</option>
-                                <option value="survey_nps_bucket" <%= (typeof filters !== 'undefined' && filters.searchColumn === 'survey_nps_bucket') ? 'selected' : '' %>>NPS Bucket</option>
-                                <option value="survey_comments" <%= (typeof filters !== 'undefined' && filters.searchColumn === 'survey_comments') ? 'selected' : '' %>>Comments</option>
-                                <option value="survey_submission_date" <%= (typeof filters !== 'undefined' && filters.searchColumn === 'survey_submission_date') ? 'selected' : '' %>>Submission Date</option>
-                                <option value="survey_submission_time" <%= (typeof filters !== 'undefined' && filters.searchColumn === 'survey_submission_time') ? 'selected' : '' %>>Submission Time</option>
+                                <option value="participant_first_name" <%= (filters.searchColumn === 'participant_first_name') ? 'selected' : (!filters.searchColumn ? 'selected' : '') %>>First Name</option>
+                                <option value="participant_last_name" <%= filters.searchColumn === 'participant_last_name' ? 'selected' : '' %>>Last Name</option>
+                                <option value="event_name" <%= filters.searchColumn === 'event_name' ? 'selected' : '' %>>Event Name</option>
+                                <option value="event_date" <%= filters.searchColumn === 'event_date' ? 'selected' : '' %>>Event Date</option>
+                                <option value="survey_nps_bucket" <%= filters.searchColumn === 'survey_nps_bucket' ? 'selected' : '' %>>NPS Bucket</option>
                             </select>
                         </div>
 
-                        <!-- Search box + buttons -->
+                        <!-- Search Input + Buttons -->
                         <div class="filter-item filter-search">
                             <div class="search-input-group">
                                 <input
@@ -97,7 +94,7 @@
                                     id="searchValue"
                                     class="form-control"
                                     placeholder="Search..."
-                                    value="<%= (typeof filters !== 'undefined' && filters.searchValue) ? filters.searchValue : '' %>"
+                                    value="<%= filters.searchValue || '' %>"
                                 >
                                 <button type="submit" class="btn btn-primary">Search</button>
                                 <button type="button" class="btn btn-secondary filter-toggle-btn" id="toggleFilters">
@@ -107,69 +104,204 @@
                         </div>
                     </div>
 
-                    <!-- Hidden inputs to preserve sorting -->
-                    <input type="hidden" name="sortColumn" id="hiddenSortColumn" value="<%= (typeof filters !== 'undefined' && filters.sortColumn) ? filters.sortColumn : '' %>">
-                    <input type="hidden" name="sortOrder" id="hiddenSortOrder" value="<%= (typeof filters !== 'undefined' && filters.sortOrder) ? filters.sortOrder : 'asc' %>">
-
-                    <!-- Hidden inputs to preserve filter states when searching -->
-                    <input type="hidden" name="npsFilters" id="hiddenNpsFilters" value="">
-                    <input type="hidden" name="commentsFilters" id="hiddenCommentsFilters" value="">
-                </form>
-
-                <!-- FILTER FORM -->
-                <form id="filterForm" method="POST" action="/filter-surveys">
+                    <!-- Advanced Filters -->
                     <div id="filterSection" class="advanced-filter-section is-hidden">
                         <h3 class="filter-options-title">Filter Options</h3>
                         <div class="filter-cards-grid">
+                            <!-- Event Name Filter -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4 class="filter-card-title">Event Name</h4>
+                                </div>
+                                <div class="card-body filter-card-scroll">
+                                    <%
+                                        const eventNameFilters = filters.eventNames || ['all'];
+                                        const isEventAll = eventNameFilters.includes('all');
+                                        const eventNameOptions = (filters.eventNameOptions || []); // pass from backend as distinct list
+                                    %>
+                                    <label class="filter-checkbox-label">
+                                        <input type="checkbox" name="eventNames" value="all" class="event-checkbox" <%= isEventAll ? 'checked' : '' %>> All
+                                    </label>
+                                    <% eventNameOptions.forEach(ev => { %>
+                                        <label class="filter-checkbox-label">
+                                            <input
+                                                type="checkbox"
+                                                name="eventNames"
+                                                value="<%= ev %>"
+                                                class="event-checkbox"
+                                                <%= eventNameFilters.includes(ev) ? 'checked' : '' %>>
+                                            <%= ev %>
+                                        </label>
+                                    <% }); %>
+                                </div>
+                            </div>
+
+                            <!-- Satisfaction Score Filter -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4 class="filter-card-title">Satisfaction Score</h4>
+                                </div>
+                                <div class="card-body">
+                                    <%
+                                        const satFilters = filters.satisfaction || ['all'];
+                                        const isSatAll = satFilters.includes('all');
+                                        const scoreValues = [1, 2, 3, 4, 5]; // adjust if your scale is different
+                                    %>
+                                    <label class="filter-checkbox-label">
+                                        <input type="checkbox" name="satisfaction" value="all" class="satisfaction-checkbox" <%= isSatAll ? 'checked' : '' %>> All
+                                    </label>
+                                    <% scoreValues.forEach(v => { %>
+                                        <label class="filter-checkbox-label">
+                                            <input
+                                                type="checkbox"
+                                                name="satisfaction"
+                                                value="<%= v %>"
+                                                class="satisfaction-checkbox"
+                                                <%= satFilters.includes(String(v)) ? 'checked' : '' %>>
+                                            <%= v %>
+                                        </label>
+                                    <% }); %>
+                                </div>
+                            </div>
+
+                            <!-- Usefulness Score Filter -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4 class="filter-card-title">Usefulness Score</h4>
+                                </div>
+                                <div class="card-body">
+                                    <%
+                                        const usefulFilters = filters.usefulness || ['all'];
+                                        const isUsefulAll = usefulFilters.includes('all');
+                                    %>
+                                    <label class="filter-checkbox-label">
+                                        <input type="checkbox" name="usefulness" value="all" class="usefulness-checkbox" <%= isUsefulAll ? 'checked' : '' %>> All
+                                    </label>
+                                    <% scoreValues.forEach(v => { %>
+                                        <label class="filter-checkbox-label">
+                                            <input
+                                                type="checkbox"
+                                                name="usefulness"
+                                                value="<%= v %>"
+                                                class="usefulness-checkbox"
+                                                <%= usefulFilters.includes(String(v)) ? 'checked' : '' %>>
+                                            <%= v %>
+                                        </label>
+                                    <% }); %>
+                                </div>
+                            </div>
+
+                            <!-- Instructor Score Filter -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4 class="filter-card-title">Instructor Score</h4>
+                                </div>
+                                <div class="card-body">
+                                    <%
+                                        const instrFilters = filters.instructor || ['all'];
+                                        const isInstrAll = instrFilters.includes('all');
+                                    %>
+                                    <label class="filter-checkbox-label">
+                                        <input type="checkbox" name="instructor" value="all" class="instructor-checkbox" <%= isInstrAll ? 'checked' : '' %>> All
+                                    </label>
+                                    <% scoreValues.forEach(v => { %>
+                                        <label class="filter-checkbox-label">
+                                            <input
+                                                type="checkbox"
+                                                name="instructor"
+                                                value="<%= v %>"
+                                                class="instructor-checkbox"
+                                                <%= instrFilters.includes(String(v)) ? 'checked' : '' %>>
+                                            <%= v %>
+                                        </label>
+                                    <% }); %>
+                                </div>
+                            </div>
+
+                            <!-- Recommendation Score Filter -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4 class="filter-card-title">Recommendation Score</h4>
+                                </div>
+                                <div class="card-body">
+                                    <%
+                                        const recFilters = filters.recommendation || ['all'];
+                                        const isRecAll = recFilters.includes('all');
+                                    %>
+                                    <label class="filter-checkbox-label">
+                                        <input type="checkbox" name="recommendation" value="all" class="recommendation-checkbox" <%= isRecAll ? 'checked' : '' %>> All
+                                    </label>
+                                    <% scoreValues.forEach(v => { %>
+                                        <label class="filter-checkbox-label">
+                                            <input
+                                                type="checkbox"
+                                                name="recommendation"
+                                                value="<%= v %>"
+                                                class="recommendation-checkbox"
+                                                <%= recFilters.includes(String(v)) ? 'checked' : '' %>>
+                                            <%= v %>
+                                        </label>
+                                    <% }); %>
+                                </div>
+                            </div>
+
+                            <!-- Overall Score Filter -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4 class="filter-card-title">Overall Score</h4>
+                                </div>
+                                <div class="card-body">
+                                    <%
+                                        const overallFilters = filters.overall || ['all'];
+                                        const isOverallAll = overallFilters.includes('all');
+                                    %>
+                                    <label class="filter-checkbox-label">
+                                        <input type="checkbox" name="overall" value="all" class="overall-checkbox" <%= isOverallAll ? 'checked' : '' %>> All
+                                    </label>
+                                    <% scoreValues.forEach(v => { %>
+                                        <label class="filter-checkbox-label">
+                                            <input
+                                                type="checkbox"
+                                                name="overall"
+                                                value="<%= v %>"
+                                                class="overall-checkbox"
+                                                <%= overallFilters.includes(String(v)) ? 'checked' : '' %>>
+                                            <%= v %>
+                                        </label>
+                                    <% }); %>
+                                </div>
+                            </div>
+
                             <!-- NPS Bucket Filter -->
                             <div class="card">
                                 <div class="card-header">
                                     <h4 class="filter-card-title">NPS Bucket</h4>
                                 </div>
-                                <div class="card-body filter-card-scroll">
+                                <div class="card-body">
                                     <%
-                                        const npsFilters = (typeof filters !== 'undefined' && filters.nps) ? filters.nps : ['all'];
+                                        const npsFilters = filters.nps || ['all'];
                                         const isNpsAll = npsFilters.includes('all');
+                                        const npsOptions = filters.npsOptions || ['Promoter', 'Passive', 'Detractor'];
                                     %>
                                     <label class="filter-checkbox-label">
                                         <input type="checkbox" name="nps" value="all" class="nps-checkbox" <%= isNpsAll ? 'checked' : '' %>> All
                                     </label>
-                                    <label class="filter-checkbox-label">
-                                        <input type="checkbox" name="nps" value="Promoter" class="nps-checkbox" <%= npsFilters.includes('Promoter') ? 'checked' : '' %>> Promoter
-                                    </label>
-                                    <label class="filter-checkbox-label">
-                                        <input type="checkbox" name="nps" value="Passive" class="nps-checkbox" <%= npsFilters.includes('Passive') ? 'checked' : '' %>> Passive
-                                    </label>
-                                    <label class="filter-checkbox-label">
-                                        <input type="checkbox" name="nps" value="Detractor" class="nps-checkbox" <%= npsFilters.includes('Detractor') ? 'checked' : '' %>> Detractor
-                                    </label>
-                                </div>
-                            </div>
-
-                            <!-- Comments Filter -->
-                            <div class="card">
-                                <div class="card-header">
-                                    <h4 class="filter-card-title">Has Comments</h4>
-                                </div>
-                                <div class="card-body">
-                                    <%
-                                        const commentsFilters = (typeof filters !== 'undefined' && filters.comments) ? filters.comments : ['all'];
-                                        const isCommentsAll = commentsFilters.includes('all');
-                                    %>
-                                    <label class="filter-checkbox-label">
-                                        <input type="checkbox" name="comments" value="all" class="comments-checkbox" <%= isCommentsAll ? 'checked' : '' %>> All
-                                    </label>
-                                    <label class="filter-checkbox-label">
-                                        <input type="checkbox" name="comments" value="Yes" class="comments-checkbox" <%= commentsFilters.includes('Yes') ? 'checked' : '' %>> Has Comments
-                                    </label>
-                                    <label class="filter-checkbox-label">
-                                        <input type="checkbox" name="comments" value="No" class="comments-checkbox" <%= commentsFilters.includes('No') ? 'checked' : '' %>> No Comments
-                                    </label>
+                                    <% npsOptions.forEach(v => { %>
+                                        <label class="filter-checkbox-label">
+                                            <input
+                                                type="checkbox"
+                                                name="nps"
+                                                value="<%= v %>"
+                                                class="nps-checkbox"
+                                                <%= npsFilters.includes(v) ? 'checked' : '' %>>
+                                            <%= v %>
+                                        </label>
+                                    <% }); %>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Filter Buttons -->
+                        <!-- Filter Action Buttons -->
                         <div class="filter-row filter-actions">
                             <div class="filter-item filter-actions-item">
                                 <button type="submit" class="btn btn-primary btn-small btn-block">
@@ -182,17 +314,15 @@
                                 </button>
                             </div>
                         </div>
-
-                        <!-- Hidden inputs to preserve search + sort when filtering -->
-                        <input type="hidden" name="searchColumn" id="filterSearchColumn" value="<%= (typeof filters !== 'undefined' && filters.searchColumn) ? filters.searchColumn : 'survey_id' %>">
-                        <input type="hidden" name="searchValue" id="filterSearchValue" value="<%= (typeof filters !== 'undefined' && filters.searchValue) ? filters.searchValue : '' %>">
-                        <input type="hidden" name="sortColumn" id="filterSortColumn" value="<%= (typeof filters !== 'undefined' && filters.sortColumn) ? filters.sortColumn : '' %>">
-                        <input type="hidden" name="sortOrder" id="filterSortOrder" value="<%= (typeof filters !== 'undefined' && filters.sortOrder) ? filters.sortOrder : 'asc' %>">
                     </div>
+
+                    <!-- Hidden inputs for sort (used by header clicks) -->
+                    <input type="hidden" name="sortColumn" id="sortColumn" value="<%= filters.sortColumn || '' %>">
+                    <input type="hidden" name="sortOrder" id="sortOrder" value="<%= filters.sortOrder || 'asc' %>">
                 </form>
             </div>
 
-            <!-- Bulk Actions Bar (optional future use) -->
+            <!-- Bulk Actions Bar -->
             <div id="bulkActionsBar" style="display: none; background-color: #f8f0f0; padding: 1rem 1.5rem; border-bottom: 1px solid #e0e0e0;">
                 <div class="flex-between">
                     <div>
@@ -206,31 +336,390 @@
                 </div>
             </div>
 
-            <!-- TABLE -->
+            <!-- Table -->
             <div>
                 <table>
                     <thead>
                         <tr>
                             <th style="width: 40px;"><input type="checkbox" id="selectAll"></th>
-                            <th class="sortable" data-column="survey_id">Survey ID <span class="sort-icon">⇅</span></th>
-                            <th class="sortable" data-column="participant_event_id">Participant Event ID <span class="sort-icon">⇅</span></th>
+                            <th class="sortable" data-column="participant_first_name">First Name <span class="sort-icon">⇅</span></th>
+                            <th class="sortable" data-column="participant_last_name">Last Name <span class="sort-icon">⇅</span></th>
+                            <th class="sortable" data-column="event_name">Event Name <span class="sort-icon">⇅</span></th>
+                            <th class="sortable" data-column="event_date">Event Date <span class="sort-icon">⇅</span></th>
                             <th class="sortable" data-column="survey_satisfaction_score">Satisfaction <span class="sort-icon">⇅</span></th>
                             <th class="sortable" data-column="survey_usefulness_score">Usefulness <span class="sort-icon">⇅</span></th>
                             <th class="sortable" data-column="survey_instructor_score">Instructor <span class="sort-icon">⇅</span></th>
                             <th class="sortable" data-column="survey_recommendation_score">Recommendation <span class="sort-icon">⇅</span></th>
                             <th class="sortable" data-column="survey_overall_score">Overall <span class="sort-icon">⇅</span></th>
                             <th class="sortable" data-column="survey_nps_bucket">NPS Bucket <span class="sort-icon">⇅</span></th>
-                            <th class="sortable" data-column="survey_comments">Comments <span class="sort-icon">⇅</span></th>
+                            <th>Comments</th>
                             <th class="sortable" data-column="survey_submission_date">Submission Date <span class="sort-icon">⇅</span></th>
-                            <th class="sortable" data-column="survey_submission_time">Submission Time <span class="sort-icon">⇅</span></th>
                         </tr>
                     </thead>
                     <tbody>
-                        <% if (typeof survey !== 'undefined' && survey.length > 0) { %>
+                        <% if (survey && survey.length > 0) { %>
                             <% survey.forEach(function(s) { %>
-                                <% 
-                                    let formattedDate = '';
+                                <%
+                                    let formattedEventDate = '';
+                                    if (s.event_date) {
+                                        const ed = new Date(s.event_date);
+                                        const em = String(ed.getMonth() + 1).padStart(2, '0');
+                                        const eday = String(ed.getDate()).padStart(2, '0');
+                                        const ey = ed.getFullYear();
+                                        formattedEventDate = `${em}/${eday}/${ey}`;
+                                    }
+
+                                    let formattedSubmissionDate = '';
                                     if (s.survey_submission_date) {
-                                        const d = new Date(s.survey_submission_date);
-                                        const month = String(d.getMonth() + 1).padStart(2, '0');
-                                        const day = String(d.getDate()).padStart(2, '0');
+                                        const sd = new Date(s.survey_submission_date);
+                                        const sm = String(sd.getMonth() + 1).padStart(2, '0');
+                                        const sday = String(sd.getDate()).padStart(2, '0');
+                                        const sy = sd.getFullYear();
+                                        formattedSubmissionDate = `${sm}/${sday}/${sy}`;
+                                    }
+                                %>
+                                <tr>
+                                    <td>
+                                        <input
+                                            type="checkbox"
+                                            class="row-checkbox"
+                                            value="<%= s.survey_id %>"
+                                            data-name="<%= s.participant_first_name %> <%= s.participant_last_name %> - <%= s.event_name %>">
+                                    </td>
+                                    <td><%= s.participant_first_name %></td>
+                                    <td><%= s.participant_last_name %></td>
+                                    <td><%= s.event_name %></td>
+                                    <td><%= formattedEventDate %></td>
+                                    <td><%= s.survey_satisfaction_score %></td>
+                                    <td><%= s.survey_usefulness_score %></td>
+                                    <td><%= s.survey_instructor_score %></td>
+                                    <td><%= s.survey_recommendation_score %></td>
+                                    <td><%= s.survey_overall_score %></td>
+                                    <td><%= s.survey_nps_bucket %></td>
+                                    <td><%= s.survey_comments || '' %></td>
+                                    <td><%= formattedSubmissionDate %></td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="13" style="text-align: center; padding: 3rem; color: #999;">
+                                    No surveys found. Click "Add Survey" to get started.
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 Ella Rises. All Rights Reserved.</p>
+        <p style="margin-top: 1rem; font-size: 0.9rem;">Making a difference, one woman at a time.</p>
+    </footer>
+
+    <script>
+        // NAV DROPDOWN
+        let dropdownTimeout;
+        const dropdown = document.querySelector('.dropdown');
+        const dropdownMenu = document.querySelector('.dropdown-menu');
+
+        if (dropdown && dropdownMenu) {
+            dropdown.addEventListener('mouseenter', function() {
+                clearTimeout(dropdownTimeout);
+                dropdownMenu.style.display = 'block';
+            });
+
+            dropdown.addEventListener('mouseleave', function() {
+                dropdownTimeout = setTimeout(function() {
+                    dropdownMenu.style.display = 'none';
+                }, 200);
+            });
+
+            dropdownMenu.addEventListener('mouseenter', function() {
+                clearTimeout(dropdownTimeout);
+                dropdownMenu.style.display = 'block';
+            });
+
+            dropdownMenu.addEventListener('mouseleave', function() {
+                dropdownTimeout = setTimeout(function() {
+                    dropdownMenu.style.display = 'none';
+                }, 200);
+            });
+        }
+
+        // When switching to a different database page, clear surveys filter visibility state
+        const pageLinks = document.querySelectorAll('.dropdown-menu a');
+        pageLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                sessionStorage.removeItem('filtersVisible_surveys');
+            });
+        });
+
+        const form = document.getElementById('surveysForm');
+
+        // FILTER TOGGLE (per-page key)
+        document.getElementById('toggleFilters').addEventListener('click', function() {
+            const filterSection = document.getElementById('filterSection');
+            const buttonText = document.getElementById('filterButtonText');
+            if (filterSection.style.display === 'none' || filterSection.style.display === '') {
+                filterSection.style.display = 'block';
+                buttonText.textContent = 'Hide Filters';
+                sessionStorage.setItem('filtersVisible_surveys', 'true');
+            } else {
+                filterSection.style.display = 'none';
+                buttonText.textContent = 'Filters';
+                sessionStorage.setItem('filtersVisible_surveys', 'false');
+            }
+        });
+
+        // On load: restore filter visibility if user had it open OR if there are active filters
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterSection = document.getElementById('filterSection');
+            const buttonText = document.getElementById('filterButtonText');
+            const filtersVisible = sessionStorage.getItem('filtersVisible_surveys');
+
+            const hasActiveFilters = '<%= (
+                (filters.eventNames && !filters.eventNames.includes("all")) ||
+                (filters.satisfaction && !filters.satisfaction.includes("all")) ||
+                (filters.usefulness && !filters.usefulness.includes("all")) ||
+                (filters.instructor && !filters.instructor.includes("all")) ||
+                (filters.recommendation && !filters.recommendation.includes("all")) ||
+                (filters.overall && !filters.overall.includes("all")) ||
+                (filters.nps && !filters.nps.includes("all"))
+            ) ? "true" : "false" %>';
+
+            if (filtersVisible === 'true' || (filtersVisible === null && hasActiveFilters === 'true')) {
+                filterSection.style.display = 'block';
+                buttonText.textContent = 'Hide Filters';
+            }
+        });
+
+        // SORTING
+        let currentSortColumn = '<%= filters.sortColumn || "" %>';
+        let currentSortOrder = '<%= filters.sortOrder || "asc" %>';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (currentSortColumn) {
+                updateSortIcons(currentSortColumn, currentSortOrder);
+            }
+        });
+
+        function updateSortIcons(column, order) {
+            document.querySelectorAll('.sort-icon').forEach(icon => {
+                icon.textContent = '⇅';
+                icon.classList.remove('sort-active');
+            });
+            const activeHeader = document.querySelector(`th[data-column="${column}"]`);
+            if (activeHeader) {
+                const icon = activeHeader.querySelector('.sort-icon');
+                icon.classList.add('sort-active');
+                icon.textContent = order === 'asc' ? '↑' : '↓';
+            }
+        }
+
+        document.querySelectorAll('.sortable').forEach(header => {
+            header.addEventListener('click', function() {
+                const column = this.getAttribute('data-column');
+                let order = 'asc';
+                if (column === currentSortColumn) {
+                    order = currentSortOrder === 'asc' ? 'desc' : 'asc';
+                }
+                document.getElementById('sortColumn').value = column;
+                document.getElementById('sortOrder').value = order;
+                form.submit();
+            });
+        });
+
+        // Generic helper for "All vs specific" checkbox groups
+        function setupAllCheckboxGroup(allSelector, groupSelector) {
+            const allCheckbox = document.querySelector(allSelector);
+            const checkboxes = document.querySelectorAll(groupSelector);
+
+            if (!allCheckbox || checkboxes.length === 0) return;
+
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    if (this === allCheckbox && this.checked) {
+                        checkboxes.forEach(other => {
+                            if (other !== allCheckbox) other.checked = false;
+                        });
+                    } else if (this !== allCheckbox && this.checked) {
+                        allCheckbox.checked = false;
+                    } else if (this !== allCheckbox && !this.checked) {
+                        const anyChecked = Array.from(checkboxes).some(other => other !== allCheckbox && other.checked);
+                        if (!anyChecked) {
+                            allCheckbox.checked = true;
+                        }
+                    }
+                });
+            });
+        }
+
+        // Set up checkbox groups
+        setupAllCheckboxGroup('.event-checkbox[value="all"]', '.event-checkbox');
+        setupAllCheckboxGroup('.satisfaction-checkbox[value="all"]', '.satisfaction-checkbox');
+        setupAllCheckboxGroup('.usefulness-checkbox[value="all"]', '.usefulness-checkbox');
+        setupAllCheckboxGroup('.instructor-checkbox[value="all"]', '.instructor-checkbox');
+        setupAllCheckboxGroup('.recommendation-checkbox[value="all"]', '.recommendation-checkbox');
+        setupAllCheckboxGroup('.overall-checkbox[value="all"]', '.overall-checkbox');
+        setupAllCheckboxGroup('.nps-checkbox[value="all"]', '.nps-checkbox');
+
+        // Bulk selection
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const bulkActionsBar = document.getElementById('bulkActionsBar');
+        const selectedCountSpan = document.getElementById('selectedCount');
+        const editButton = document.getElementById('editSelected');
+
+        selectAllCheckbox.addEventListener('change', function() {
+            const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+            rowCheckboxes.forEach(checkbox => checkbox.checked = this.checked);
+            updateBulkActions();
+        });
+
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('row-checkbox')) {
+                updateBulkActions();
+            }
+        });
+
+        function updateBulkActions() {
+            const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+            const count = checkedBoxes.length;
+
+            if (count > 0) {
+                bulkActionsBar.style.display = 'block';
+                selectedCountSpan.textContent = count + ' selected';
+                editButton.style.display = count === 1 ? 'inline-block' : 'none';
+            } else {
+                bulkActionsBar.style.display = 'none';
+                editButton.style.display = 'none';
+            }
+
+            const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+            selectAllCheckbox.checked = count === rowCheckboxes.length && count > 0;
+        }
+
+        document.getElementById('clearSelection').addEventListener('click', function() {
+            document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = false);
+            selectAllCheckbox.checked = false;
+            updateBulkActions();
+        });
+
+        // Edit Selected (single)
+        document.getElementById('editSelected').addEventListener('click', function() {
+            const checkedBox = document.querySelector('.row-checkbox:checked');
+            if (checkedBox) {
+                const surveyId = checkedBox.value;
+                window.location.href = '/surveys/edit/' + surveyId;
+            }
+        });
+
+        // Delete Selected (bulk)
+        document.getElementById('deleteSelected').addEventListener('click', function() {
+            const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+            const ids = Array.from(checkedBoxes).map(cb => cb.value);
+            const count = ids.length;
+            
+            if (count === 0) return;
+
+            let confirmMessage;
+            let finalMessage;
+
+            if (count === 1) {
+                const name = checkedBoxes[0].getAttribute('data-name');
+                confirmMessage = `Are you sure you want to delete the survey for ${name}?`;
+                finalMessage = `Survey for ${name} deleted`;
+            } else {
+                confirmMessage = `Are you sure you want to delete ${count} surveys?`;
+                finalMessage = `${count} surveys deleted`;
+            }
+            
+            showDeleteConfirmation(confirmMessage, function() {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/delete-multiple';
+
+                // table name
+                const tableInput = document.createElement('input');
+                tableInput.type = 'hidden';
+                tableInput.name = 'table';
+                tableInput.value = 'surveys';
+                form.appendChild(tableInput);
+
+                // IDs being deleted
+                const idsInput = document.createElement('input');
+                idsInput.type = 'hidden';
+                idsInput.name = 'ids';
+                idsInput.value = JSON.stringify(ids);
+                form.appendChild(idsInput);
+
+                // Human-friendly message to show after redirect
+                const msgInput = document.createElement('input');
+                msgInput.type = 'hidden';
+                msgInput.name = 'message';
+                msgInput.value = finalMessage;
+                form.appendChild(msgInput);
+
+                document.body.appendChild(form);
+                form.submit();
+            });
+        });
+
+        // Delete confirmation modal
+        function showDeleteConfirmation(message, onConfirm) {
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.id = 'deleteModal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Confirm Deletion</h3>
+                        <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p style="font-size: 1.1rem; color: #666;">${message}</p>
+                        <p style="margin-top: 1rem; color: #999;">This action cannot be undone.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-outline" onclick="closeDeleteModal()">Cancel</button>
+                        <button class="btn btn-danger" id="confirmDeleteBtn">Yes, Delete</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+                closeDeleteModal();
+                onConfirm();
+            });
+
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) closeDeleteModal();
+            });
+        }
+
+        function closeDeleteModal() {
+            const modal = document.getElementById('deleteModal');
+            if (modal) modal.remove();
+        }
+
+        // Clear Filters
+        document.getElementById('clearFilters').addEventListener('click', function() {
+            sessionStorage.removeItem('filtersVisible_surveys');
+            window.location.href = '/surveys';
+        });
+
+        // Auto-hide alerts
+        const alertMessages = document.querySelectorAll('.alert');
+        alertMessages.forEach(alert => {
+            setTimeout(() => {
+                alert.style.transition = 'opacity 0.5s';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            }, 5000);
+        });
+    </script>
+</body>
+</html>

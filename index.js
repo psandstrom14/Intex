@@ -158,7 +158,7 @@ app.get('/users',(req,res) => {
             sessionData.flashMessage = null;
             sessionData.flashType = null;
 
-            // --- your existing filtering/sorting code ---
+            // --- filtering/sorting code ---
             let { searchColumn, searchValue, city, school, interest, donations, sortColumn, sortOrder } = req.query;
 
             // defaults
@@ -167,9 +167,16 @@ app.get('/users',(req,res) => {
 
             let query = knex('participants');
 
-            // Search
+            // Case-insensitive search
             if (searchValue && searchColumn) {
-                query.where(searchColumn, 'like', `%${searchValue}%`);
+                const term = searchValue.trim();
+                if (term) {
+                    // Postgres ILIKE for case-insensitive search
+                    query.whereRaw(
+                        `CAST(${searchColumn} AS TEXT) ILIKE ?`,
+                        [`%${term}%`]
+                    );
+                }
             }
 
             // City filter
@@ -248,6 +255,7 @@ app.get('/users',(req,res) => {
     });
 
 
+
 // EVENT MAINTENANCE PAGE: 
 app.get('/events',(req,res) => {
     res.render("events"); 
@@ -315,9 +323,15 @@ app.post('/filter-surveys', (req, res) => {
     // Start knex query
     let query = knex('surveys');
 
-    // Search (string-based like on participants page)
+    // Case-insensitive search
     if (searchColumn && searchValue) {
-        query = query.where(searchColumn, 'like', `%${searchValue}%`);
+        const term = searchValue.trim();
+        if (term) {
+            query.whereRaw(
+                `CAST(${searchColumn} AS TEXT) ILIKE ?`,
+                [`%${term}%`]
+            );
+        }
     }
 
     // NPS filter (survey_nps_bucket)
@@ -399,9 +413,15 @@ app.post('/sort-surveys', (req, res) => {
 
     let query = knex('surveys');
 
-    // Search
+    // Case-insensitive search
     if (searchColumn && searchValue) {
-        query = query.where(searchColumn, 'like', `%${searchValue}%`);
+        const term = searchValue.trim();
+        if (term) {
+            query.whereRaw(
+                `CAST(${searchColumn} AS TEXT) ILIKE ?`,
+                [`%${term}%`]
+            );
+        }
     }
 
     // NPS filter

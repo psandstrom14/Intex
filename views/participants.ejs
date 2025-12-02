@@ -413,6 +413,16 @@
             });
         }
 
+        // When switching to a different database page, clear participants filter visibility state
+            const pageLinks = document.querySelectorAll('.dropdown-menu a');
+            pageLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    // this key is what we use to remember whether the filters panel was open
+                    sessionStorage.removeItem('filtersVisible_participants');
+                });
+            });
+
+
         const form = document.getElementById('participantsForm');
 
         // FILTER TOGGLE (per-page key)
