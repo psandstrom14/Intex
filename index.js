@@ -341,5 +341,9 @@ app.get('/donations',(req,res) => {
     res.render("donations"); 
 });
 
+app.get(donate_now, (req,res) => {
+    res.render("donate_now"); 
+});
+
 // START TO LISTEN (& tell command line)
 app.listen(port,() => console.log("the server has started to listen"));
