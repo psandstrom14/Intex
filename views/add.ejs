@@ -1,0 +1,85 @@
+<!--Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom-->
+<!--This page will dispaly volunteers, and allow CRUD (for managers) + Search Capabilities.-->
+<!--This page will only be visible to users who are logged in.-->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add - Ella Rises</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo"><a href="/">Ella Rises</a></div>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/about">About</a></li>
+                <li><a href="/donate_now" >Donate Now</a></li>
+                <li class="dropdown">
+                    <span class="dropdown-toggle">
+                        <a href="#" class="selected-nav">Pages ▾</a>
+                    </span>
+                    <ul class="dropdown-menu">
+                        <li><a href="/users">Users</a></li>
+                        <li><a href="/participants">Participants</a></li>
+                        <li><a href="/events">Events</a></li>
+                        <li><a href="/surveys">Surveys</a></li>
+                        <li><a href="/milestones">Milestones</a></li>
+                        <li><a href="/donations">Donations</a></li>
+                    </ul>
+                </li>
+                <li><a href="/login" class="login-btn">Login</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Add Page</h1>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 Ella Rises. All Rights Reserved.</p>
+        <p style="margin-top: 1rem; font-size: 0.9rem;">Making a difference, one woman at a time.</p>
+    </footer>
+
+    <script>
+        // Allow Dropdown to handle delay to increase usability
+        let dropdownTimeout;
+        const dropdown = document.querySelector('.dropdown');
+        const dropdownMenu = document.querySelector('.dropdown-menu');
+
+        if (dropdown && dropdownMenu) {
+            dropdown.addEventListener('mouseenter', function() {
+                clearTimeout(dropdownTimeout);
+                dropdownMenu.style.display = 'block';
+            });
+
+            dropdown.addEventListener('mouseleave', function() {
+                dropdownTimeout = setTimeout(function() {
+                    dropdownMenu.style.display = 'none';
+                }, 200); // 200ms delay before closing
+            });
+
+            dropdownMenu.addEventListener('mouseenter', function() {
+                clearTimeout(dropdownTimeout);
+                dropdownMenu.style.display = 'block';
+            });
+
+            dropdownMenu.addEventListener('mouseleave', function() {
+                dropdownTimeout = setTimeout(function() {
+                    dropdownMenu.style.display = 'none';
+                }, 200);
+            });
+        }
+    </script>
+</body>
+</html>
