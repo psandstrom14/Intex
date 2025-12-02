@@ -32,6 +32,11 @@ const port = process.env.PORT || 3000; // Creates variable to store port. Uses .
 app.set("view engine", "ejs"); // Allows you to use EJS for the web pages - requires a views folder and all files are .ejs
 app.use("/images",express.static(path.join(__dirname, "images"))); // allows you to create path for images (in folder titled "images")
 app.use(express.static('public'));
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'intex-secret-key',
+    resave: false,
+    saveUninitialized: false
+}));
 
 // MIDDLEWARE: (Middleware is code that runs between the time the request comes to the server and the time the response is sent back. It allows you to intercept and decide if the request should continue. It also allows you to parse the body request from the html form, handle errors, check authentication, etc.)
 app.use(express.urlencoded({extended:true})); // Makes working with HTML forms a lot easier. Takes inputs and stores them in req.body (for post) or req.query (for get).
@@ -85,7 +90,7 @@ app.get('/login',(req,res) => {
     });
 
 // DELETE FUNCTIONALITY: 
-    // Map tables to their primary key column
+    // Map tables to primary key columns
     const deleteConfig = {
         participants: 'participant_id',
         events: 'event_id',
@@ -97,9 +102,8 @@ app.get('/login',(req,res) => {
 
     app.post('/delete-multiple', async (req, res) => {
         try {
-            const { table, ids } = req.body;
+            const { table, ids, message } = req.body;
 
-            // Validate table
             const idColumn = deleteConfig[table];
             if (!idColumn) {
                 console.error('Delete attempted on invalid table:', table);
@@ -117,13 +121,21 @@ app.get('/login',(req,res) => {
                 return res.redirect('/' + table);
             }
 
-            await knex(table).whereIn(idColumn, idArray).del();
+            const deletedCount = await knex(table)
+                .whereIn(idColumn, idArray)
+                .del();
+
+            // store flash message in session
+            // if the page sent a custom message, use it; otherwise use a fallback
+            req.session.flashMessage = message || `${deletedCount} record(s) deleted`;
+            req.session.flashType = 'success';
 
             res.redirect('/' + table);
-
         } catch (err) {
             console.error('Error deleting records:', err);
-            res.status(500).send('Error deleting records');
+            req.session.flashMessage = 'Error deleting record(s)';
+            req.session.flashType = 'danger';
+            res.redirect('/' + (req.body.table || ''));
         }
     });
 
@@ -133,10 +145,21 @@ app.get('/users',(req,res) => {
     res.render("users"); 
 });
 
-// PARTICIPANT MAINTENANCE PAGE: 
+// PARTICIPANT MAINTENANCE PAGE:
     app.get('/participants', async (req, res) => {
         try {
-            let {searchColumn, searchValue, city, school, interest,donations,sortColumn,sortOrder} = req.query;
+            // safe access to session
+            const sessionData = req.session || {};
+
+            const message = sessionData.flashMessage || '';
+            const messageType = sessionData.flashType || 'success';
+
+            // clear flash so it only shows once
+            sessionData.flashMessage = null;
+            sessionData.flashType = null;
+
+            // --- your existing filtering/sorting code ---
+            let { searchColumn, searchValue, city, school, interest, donations, sortColumn, sortOrder } = req.query;
 
             // defaults
             searchColumn = searchColumn || 'participant_first_name';
@@ -199,8 +222,8 @@ app.get('/users',(req,res) => {
 
             res.render('participants', {
                 participant: results,
-                message: '',
-                messageType: 'success',
+                message,
+                messageType,
                 filters
             });
 
@@ -223,6 +246,7 @@ app.get('/users',(req,res) => {
             });
         }
     });
+
 
 // EVENT MAINTENANCE PAGE: 
 app.get('/events',(req,res) => {

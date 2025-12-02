@@ -594,42 +594,57 @@
             }
         });
 
-        // Generic DELETE route
+        // Delete Selected (bulk)
         document.getElementById('deleteSelected').addEventListener('click', function() {
             const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
             const ids = Array.from(checkedBoxes).map(cb => cb.value);
             const count = ids.length;
+            
             if (count === 0) return;
 
             let confirmMessage;
+            let finalMessage; // <- message we will show AFTER redirect
+
             if (count === 1) {
                 const name = checkedBoxes[0].getAttribute('data-name');
                 confirmMessage = `Are you sure you want to delete ${name}?`;
+                finalMessage = `${name} deleted`;
             } else {
                 confirmMessage = `Are you sure you want to delete ${count} participants?`;
+                finalMessage = `${count} participants deleted`;
             }
-
+            
             showDeleteConfirmation(confirmMessage, function() {
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.action = '/delete-multiple';
 
+                // table name (generic delete route needs this)
                 const tableInput = document.createElement('input');
                 tableInput.type = 'hidden';
                 tableInput.name = 'table';
-                tableInput.value = 'participants';
+                tableInput.value = 'participants';  // change per page (events, surveys, etc.)
                 form.appendChild(tableInput);
 
+                // IDs being deleted
                 const idsInput = document.createElement('input');
                 idsInput.type = 'hidden';
                 idsInput.name = 'ids';
                 idsInput.value = JSON.stringify(ids);
                 form.appendChild(idsInput);
 
+                // Human-friendly message to show after redirect
+                const msgInput = document.createElement('input');
+                msgInput.type = 'hidden';
+                msgInput.name = 'message';
+                msgInput.value = finalMessage;
+                form.appendChild(msgInput);
+
                 document.body.appendChild(form);
                 form.submit();
             });
         });
+
 
         // Delete confirmation modal
         function showDeleteConfirmation(message, onConfirm) {
