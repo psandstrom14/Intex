@@ -1,85 +1,120 @@
 <!--Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom-->
 <!--This page will tell more information about ER as well as allow users to view a tableau dashboard with information about the webpage-->
 
-
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>About - Ella Rises</title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
     <!-- Navigation -->
     <nav>
-        <div class="nav-container">
-            <div class="logo"><a href="/">Ella Rises</a></div>
-            <ul class="nav-links">
-                <li><a href="/">Home</a></li>
-                <li><a href="/about" class="selected-nav">About</a></li>
-                <li><a href="/donate_now" >Donate Now</a></li>
-                <li class="dropdown">
-                    <span class="dropdown-toggle">
-                        <a href="#">Pages ▾</a>
-                    </span>
-                    <ul class="dropdown-menu">
-                        <li><a href="/users">Users</a></li>
-                        <li><a href="/participants">Participants</a></li>
-                        <li><a href="/events">Events</a></li>
-                        <li><a href="/surveys">Surveys</a></li>
-                        <li><a href="/milestones">Milestones</a></li>
-                        <li><a href="/donations">Donations</a></li>
-                    </ul>
-                </li>
-                <li><a href="/login" class="login-btn">Login</a></li>
+      <div class="nav-container">
+        <div class="logo"><a href="/">Ella Rises</a></div>
+        <ul class="nav-links">
+          <li><a href="/">Home</a></li>
+          <li><a href="/about" class="selected-nav">About</a></li>
+          <li><a href="/donate_now">Donate Now</a></li>
+          <li class="dropdown">
+            <span class="dropdown-toggle">
+              <a href="#">Pages ▾</a>
+            </span>
+            <ul class="dropdown-menu">
+              <li><a href="/users">Users</a></li>
+              <li><a href="/participants">Participants</a></li>
+              <li><a href="/events">Events</a></li>
+              <li><a href="/surveys">Surveys</a></li>
+              <li><a href="/milestones">Milestones</a></li>
+              <li><a href="/donations">Donations</a></li>
             </ul>
-        </div>
+          </li>
+          <li><a href="/login" class="login-btn">Login</a></li>
+        </ul>
+      </div>
     </nav>
 
     <!-- Hero Section -->
     <section class="hero">
-        <div class="hero-content">
-            <h1>About Page</h1>
-            <p>Join us in creating opportunities and building a brighter future for women in our community through education, support, and empowerment.</p>
-        </div>
+      <div class="hero-content">
+        <h1>About Us</h1>
+      </div>
+    </section>
+
+    <!-- Mission Section -->
+    <section class="home-mission-section">
+      <div class="home-mission-content">
+        <h2 class="home-mission-heading">Our Mission</h2>
+        <p class="home-mission-text">
+          Ella Rises is dedicated to breaking down barriers and creating
+          pathways to success for young women from all backgrounds. Through
+          comprehensive programs in education, cultural arts, and personal
+          growth, we help women realize their full potential.
+        </p>
+        <p class="home-mission-text">
+          We believe that when women thrive, entire communities flourish. Every
+          donation, volunteer hour, and word of encouragement contributes to
+          building a more equitable and empowered future for all women.
+        </p>
+      </div>
+    </section>
+
+    <section class="container mt-4" style="text-align: center">
+      <video
+        src="https://video.wixstatic.com/video/e5f869_f075e19ca2744354bb20a65881dce28f/1080p/mp4/file.mp4"
+        autoplay
+        loop
+        muted
+        playsinline
+        controls
+        style="
+          width: 100%;
+          max-width: 800px;
+          border-radius: 12px;
+          box-shadow: 0 4px 20px rgba(58, 63, 59, 0.1);
+        "
+      ></video>
     </section>
 
     <!-- Footer -->
     <footer>
-        <p>&copy; 2025 Ella Rises. All Rights Reserved.</p>
-        <p style="margin-top: 1rem; font-size: 0.9rem;">Making a difference, one woman at a time.</p>
+      <p>&copy; 2025 Ella Rises. All Rights Reserved.</p>
+      <p style="margin-top: 1rem; font-size: 0.9rem">
+        Making a difference, one woman at a time.
+      </p>
     </footer>
 
     <script>
-        // Allow Dropdown to handle delay to increase usability
-        let dropdownTimeout;
-        const dropdown = document.querySelector('.dropdown');
-        const dropdownMenu = document.querySelector('.dropdown-menu');
+      // Allow Dropdown to handle delay to increase usability
+      let dropdownTimeout;
+      const dropdown = document.querySelector(".dropdown");
+      const dropdownMenu = document.querySelector(".dropdown-menu");
 
-        if (dropdown && dropdownMenu) {
-            dropdown.addEventListener('mouseenter', function() {
-                clearTimeout(dropdownTimeout);
-                dropdownMenu.style.display = 'block';
-            });
+      if (dropdown && dropdownMenu) {
+        dropdown.addEventListener("mouseenter", function () {
+          clearTimeout(dropdownTimeout);
+          dropdownMenu.style.display = "block";
+        });
 
-            dropdown.addEventListener('mouseleave', function() {
-                dropdownTimeout = setTimeout(function() {
-                    dropdownMenu.style.display = 'none';
-                }, 200); // 200ms delay before closing
-            });
+        dropdown.addEventListener("mouseleave", function () {
+          dropdownTimeout = setTimeout(function () {
+            dropdownMenu.style.display = "none";
+          }, 200); // 200ms delay before closing
+        });
 
-            dropdownMenu.addEventListener('mouseenter', function() {
-                clearTimeout(dropdownTimeout);
-                dropdownMenu.style.display = 'block';
-            });
+        dropdownMenu.addEventListener("mouseenter", function () {
+          clearTimeout(dropdownTimeout);
+          dropdownMenu.style.display = "block";
+        });
 
-            dropdownMenu.addEventListener('mouseleave', function() {
-                dropdownTimeout = setTimeout(function() {
-                    dropdownMenu.style.display = 'none';
-                }, 200);
-            });
-        }
+        dropdownMenu.addEventListener("mouseleave", function () {
+          dropdownTimeout = setTimeout(function () {
+            dropdownMenu.style.display = "none";
+          }, 200);
+        });
+      }
     </script>
-</body>
+  </body>
 </html>
