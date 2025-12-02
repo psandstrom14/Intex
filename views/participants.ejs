@@ -474,13 +474,7 @@
             const filtersVisible = sessionStorage.getItem('filtersVisible');
             
             // Show filters if user previously opened them OR if filters are active
-            const hasActiveFilters = <%=
-                (typeof filters !== 'undefined' && filters &&
-                ((filters.city && !filters.city.includes('all')) ||
-                (filters.school && !filters.school.includes('all')) ||
-                (filters.interest && !filters.interest.includes('all')) ||
-                (filters.donations && !filters.donations.includes('all')))) ? 'true' : 'false'
-            %>;
+            const hasActiveFilters = '<%= (typeof filters !== "undefined" && filters && ((filters.city && !filters.city.includes("all")) || (filters.school && !filters.school.includes("all")) || (filters.interest && !filters.interest.includes("all")) || (filters.donations && !filters.donations.includes("all")))) ? "true" : "false" %>';
             
             if (filtersVisible === 'true' || (filtersVisible === null && hasActiveFilters)) {
                 filterSection.style.display = 'block';
@@ -571,68 +565,58 @@
                 sortOrderInput.value = order;
                 form.appendChild(sortOrderInput);
 
-                // Preserve existing filters
-                <% if (typeof filters !== 'undefined') { %>
-                    // Search filters
-                    <% if (filters.searchColumn) { %>
-                        const searchColumnInput = document.createElement('input');
-                        searchColumnInput.type = 'hidden';
-                        searchColumnInput.name = 'searchColumn';
-                        searchColumnInput.value = '<%= filters.searchColumn %>';
-                        form.appendChild(searchColumnInput);
-                    <% } %>
-                    <% if (filters.searchValue) { %>
-                        const searchValueInput = document.createElement('input');
-                        searchValueInput.type = 'hidden';
-                        searchValueInput.name = 'searchValue';
-                        searchValueInput.value = '<%= filters.searchValue %>';
-                        form.appendChild(searchValueInput);
-                    <% } %>
+                // Preserve existing filters by reading from DOM (captures current state)
+                const searchColumn = document.getElementById('searchColumn')?.value;
+                const searchValue = document.getElementById('searchValue')?.value;
+                
+                if (searchColumn) {
+                    const searchColumnInput = document.createElement('input');
+                    searchColumnInput.type = 'hidden';
+                    searchColumnInput.name = 'searchColumn';
+                    searchColumnInput.value = searchColumn;
+                    form.appendChild(searchColumnInput);
+                }
+                
+                if (searchValue) {
+                    const searchValueInput = document.createElement('input');
+                    searchValueInput.type = 'hidden';
+                    searchValueInput.name = 'searchValue';
+                    searchValueInput.value = searchValue;
+                    form.appendChild(searchValueInput);
+                }
 
-                    // City filters
-                    <% if (filters.city && Array.isArray(filters.city)) { %>
-                        <% filters.city.forEach(city => { %>
-                            const cityInput = document.createElement('input');
-                            cityInput.type = 'hidden';
-                            cityInput.name = 'city';
-                            cityInput.value = '<%= city %>';
-                            form.appendChild(cityInput);
-                        <% }); %>
-                    <% } %>
+                // Preserve filter checkboxes (reads current checked state)
+                document.querySelectorAll('.city-checkbox:checked').forEach(cb => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'city';
+                    input.value = cb.value;
+                    form.appendChild(input);
+                });
 
-                    // School filters
-                    <% if (filters.school && Array.isArray(filters.school)) { %>
-                        <% filters.school.forEach(school => { %>
-                            const schoolInput = document.createElement('input');
-                            schoolInput.type = 'hidden';
-                            schoolInput.name = 'school';
-                            schoolInput.value = '<%= school %>';
-                            form.appendChild(schoolInput);
-                        <% }); %>
-                    <% } %>
+                document.querySelectorAll('.school-checkbox:checked').forEach(cb => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'school';
+                    input.value = cb.value;
+                    form.appendChild(input);
+                });
 
-                    // Interest filters
-                    <% if (filters.interest && Array.isArray(filters.interest)) { %>
-                        <% filters.interest.forEach(interest => { %>
-                            const interestInput = document.createElement('input');
-                            interestInput.type = 'hidden';
-                            interestInput.name = 'interest';
-                            interestInput.value = '<%= interest %>';
-                            form.appendChild(interestInput);
-                        <% }); %>
-                    <% } %>
+                document.querySelectorAll('.interest-checkbox:checked').forEach(cb => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'interest';
+                    input.value = cb.value;
+                    form.appendChild(input);
+                });
 
-                    // Donations filters
-                    <% if (filters.donations && Array.isArray(filters.donations)) { %>
-                        <% filters.donations.forEach(donation => { %>
-                            const donationsInput = document.createElement('input');
-                            donationsInput.type = 'hidden';
-                            donationsInput.name = 'donations';
-                            donationsInput.value = '<%= donation %>';
-                            form.appendChild(donationsInput);
-                        <% }); %>
-                    <% } %>
-                <% } %>
+                document.querySelectorAll('.donations-checkbox:checked').forEach(cb => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'donations';
+                    input.value = cb.value;
+                    form.appendChild(input);
+                });
 
                 document.body.appendChild(form);
                 form.submit();
@@ -877,4 +861,3 @@
     </script>
 </body>
 </html>
-

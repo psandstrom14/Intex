@@ -41,10 +41,175 @@
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
-            <h1>Add Page</h1>
+            <h1>Add <%= table_name %></h1>
         </div>
     </section>
 
+    <!--Main Content-->
+    <div class="container">
+        <div class="add-card">
+            <!-- Add-Participant Form -->
+            <%if (table_name === "participants"){%>
+                <form id="addForm" class="add-form" method="POST" action="/add/participants">
+                    <br><br>
+                    <p class="text" style="text-align: center;">Please add any neccesary information for a new participant.</p>
+                
+                    <div class="form-group">
+                        <label class="form-label">First Name <span class="required">*</span></label>
+                        <input type="text" class="form-input" name="participant_first_name" placeholder="John" required autofocus>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Last Name <span class="required">*</span></label>
+                        <input type="text" class="form-input" name="participant_last_name" placeholder="Doe" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Date of Birth <span class="required">*</span></label>
+                        <input type="datetime-local" class="form-input" name="participant_dob" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Participant Role <span class="required">*</span></label>
+                        <select class="form-select" name="participant_role" required>
+                            <option value="">Select a level</option>
+                            <option value="admin">Admin</option>
+                            <option value="participant">Participant</option>
+                            <!--UPDATE LATER: add more roles-->
+                        </select>                        
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Phone Number <span class="required">*</span></label>
+                        <input type="tel" class="form-input" name="participant_phone" placeholder="1234567890" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">City <span class="required">*</span></label>
+                        <input list="cities" name="participant_city">
+                        <datalist name="participant_city" id="cities">
+                            <option value="Bountiful">Bountiful</option>
+                            <option value="Draper">Draper</option>
+                            <option value="Layton">Layton</option>
+                            <option value="Lehi">Lehi</option>
+                            <option value="Logan">Logan</option>
+                            <option value="Murray">Murray</option>
+                            <option value="Ogden">Ogden</option>
+                            <option value="Orem">Orem</option>
+                            <option value="Pleasant Grove">Pleasant Grove</option>
+                            <option value="Provo">Provo</option>
+                            <option value="Riverton">Riverton</option>
+                            <option value="Salt Lake City">Salt Lake City</option>
+                            <option value="Sandy">Sandy</option>
+                            <option value="Spanish Fork">Spanish Fork</option>
+                            <option value="St. George">St. George</option>
+                            <option value="Taylorsville">Taylorsville</option>
+                            <option value="West Jordan">West Jordan</option>
+                            <option value="West Valley City">West Valley City</option>
+                        </datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Zip Code <span class="required">*</span></label>
+                        <input type="number" class="form-input" name="participant_zip" placeholder="12345" maxlength="5" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">School or Employer <span class="required">*</span></label>
+                        <input type="text" class="form-input" name="username" placeholder="BYU" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Field of Interest <span class="required">*</span></label>
+                        <select class="form-select" name="level" required>
+                            <option value="">Select an Interest</option>
+                            <option value="STEM">STEM</option>
+                            <option value="Arts">Arts</option>
+                            <option value="Both">Both</option>
+                        </select>                        
+                    </div>
+
+                    <button type="submit" class="submit-btn">Add User</button>
+                    <a href="/participants" class="back-btn">Back to Database</a>
+                </form>
+                </div>
+            <!-- Add-milestones Form -->
+            <%} else if (table === "milestones"){%>
+                <form id="signupForm" class="signup-form" action="/add/milestones" method="POST">
+                    <br><br>
+                    <p class="text" style="text-align: center;">Please add any neccesary information for the milestone.</p>
+
+                    
+
+                    <button type="submit" class="submit-btn">Add Milestones</button>
+                    <a href="/milestones" class="back-btn">Back to Database</a>
+                </form>
+            <!-- Add-milestones Form -->
+            <%} else if (table === "milestones"){%>
+                <form id="signupForm" class="signup-form" action="/add/milestones" method="POST">
+                    <br><br>
+                    <p class="text" style="text-align: center;">Please add any neccesary information for the milestone.</p>
+
+                    <!--Input forms-->
+
+                    <button type="submit" class="submit-btn">Add Milestones</button>
+                    <a href="/milestones" class="back-btn">Back to Database</a>
+                </form>
+            <!-- Add-Events Form -->
+            <%} else if (table === "events"){%>
+                <form id="signupForm" class="signup-form" action="/add/events" method="POST">
+                    <br><br>
+                    <p class="text" style="text-align: center;">Please add any neccesary information for the milestone.</p>
+
+                    <!--Input forms-->
+
+                    <button type="submit" class="submit-btn">Add Events</button>
+                    <a href="/events" class="back-btn">Back to Database</a>
+                </form>
+            <!-- Add-Events Form -->
+            <%} else if (table === "events"){%>
+                <form id="signupForm" class="signup-form" action="/add/events" method="POST">
+                    <br><br>
+                    <p class="text" style="text-align: center;">Please add any neccesary information for the milestone.</p>
+
+                    <!--Input forms-->
+
+                    <button type="submit" class="submit-btn">Add Events</button>
+                    <a href="/events" class="back-btn">Back to Database</a>
+                </form>
+            <!-- Add-Order Form -->
+            <%} else { %>
+                <form id="signupForm" class="signup-form" action="/add/orders" method="POST">
+                    <br><br>
+                    <h1 class="title">Add Order</h1>
+                    <p class="text" style="text-align: center;">Please add any neccesary information for this order.</p>
+
+                    <div class="form-group">
+                        <label class="form-label">Customer ID<span class="required">*</span></label>
+                        <input type="number" class="form-input" name="customer_id" placeholder="10" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Employee ID<span class="required">*</span></label>
+                        <input type="number" class="form-input" name="employee_id" placeholder="1233" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Quantity <span class="required">*</span></label>
+                        <input type="number" class="form-input" name="quantity" placeholder="3" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Date <span class="required">*</span></label>
+                        <input type="datetime-local" class="form-input" name="date" required>
+                    </div>
+
+                    <button type="submit" class="submit-btn">Add Order</button>
+                    <a href="/database" class="back-btn">Back to Database</a>
+                </form>
+            <%}%>
+        </div>
+    </div>
     <!-- Footer -->
     <footer>
         <p>&copy; 2025 Ella Rises. All Rights Reserved.</p>
