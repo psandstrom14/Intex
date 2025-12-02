@@ -480,15 +480,16 @@
             const buttonText = document.getElementById('filterButtonText');
             const filtersVisible = sessionStorage.getItem('filtersVisible_surveys');
 
-            const hasActiveFilters = '<%= (
-                (filters.eventNames && !filters.eventNames.includes("all")) ||
-                (filters.satisfaction && !filters.satisfaction.includes("all")) ||
-                (filters.usefulness && !filters.usefulness.includes("all")) ||
-                (filters.instructor && !filters.instructor.includes("all")) ||
-                (filters.recommendation && !filters.recommendation.includes("all")) ||
-                (filters.overall && !filters.overall.includes("all")) ||
-                (filters.nps && !filters.nps.includes("all"))
-            ) ? "true" : "false" %>';
+            const hasActiveFilters =  (
+                (filters.searchValue && filters.searchValue.trim() !== '') ||
+                (filters.eventNames && filters.eventNames.length > 0 && !filters.eventNames.includes("all")) ||
+                (filters.satisfaction && filters.satisfaction.length > 0 && !filters.satisfaction.includes("all")) ||
+                (filters.usefulness && filters.usefulness.length > 0 && !filters.usefulness.includes("all")) ||
+                (filters.instructor && filters.instructor.length > 0 && !filters.instructor.includes("all")) ||
+                (filters.recommendation && filters.recommendation.length > 0 && !filters.recommendation.includes("all")) ||
+                (filters.overall && filters.overall.length > 0 && !filters.overall.includes("all")) ||
+                (filters.nps && filters.nps.length > 0 && !filters.nps.includes("all"))
+            ) ? "true" : "false";
 
             if (filtersVisible === 'true' || (filtersVisible === null && hasActiveFilters === 'true')) {
                 filterSection.style.display = 'block';
