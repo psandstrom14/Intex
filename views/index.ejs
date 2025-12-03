@@ -269,12 +269,11 @@
         </div>
         </section>
 
-        <!-- Footer -->
+        <!--Footer-->       
         <footer>
             <p>&copy; 2025 Ella Rises. All Rights Reserved.</p>
             <p class="footer-subtext">Making a difference, one woman at a time.</p>
-            
-            <!--Google Translate-->
+        
             <div class="custom-language-selector">
                 <button class="language-dropdown-btn" onclick="toggleLanguageDropdown()">
                     <span id="currentLanguage">🌐 English</span>
@@ -292,60 +291,72 @@
                     <a href="#" onclick="changeLanguage('ko'); return false;">한국어</a>
                 </div>
             </div>
-            
-            <!-- Hidden Google Translate Element -->
-            <div id="google_translate_element" style="display: none;"></div>
-            
-            <script type="text/javascript">
-            function googleTranslateElementInit() {
-                new google.translate.TranslateElement({
-                    pageLanguage: 'en',
-                    includedLanguages: 'en,es,fr,de,pt,ar,zh-CN,ja,ko',
-                    autoDisplay: false
-                }, 'google_translate_element');
-            }
-            
-            function changeLanguage(lang) {
-                const selectField = document.querySelector('.goog-te-combo');
-                if (selectField) {
-                    selectField.value = lang;
-                    selectField.dispatchEvent(new Event('change'));
-                    
-                    // Update button text
-                    const languageNames = {
-                        'en': '🌐 English',
-                        'es': '🌐 Español',
-                        'fr': '🌐 Français',
-                        'de': '🌐 Deutsch',
-                        'pt': '🌐 Português',
-                        'ar': '🌐 العربية',
-                        'zh-CN': '🌐 中文',
-                        'ja': '🌐 日本語',
-                        'ko': '🌐 한국어'
-                    };
-                    document.getElementById('currentLanguage').textContent = languageNames[lang] || '🌐 English';
+        
+            <div id="google_translate_element" style="display:none;"></div>
+        
+            <script>
+                const LANGUAGE_NAMES = {'en': '🌐 English','es': '🌐 Español','fr': '🌐 Français','de': '🌐 Deutsch','pt': '🌐 Português','ar': '🌐 العربية','zh-CN': '🌐 中文','ja': '🌐 日本語','ko': '🌐 한국어'};
+        
+                const SESSION_LANGUAGE = '<%= language || "en" %>';
+        
+                function googleTranslateElementInit() {
+                    new google.translate.TranslateElement({
+                        pageLanguage: 'en',
+                        includedLanguages: 'en,es,fr,de,pt,ar,zh-CN,ja,ko',
+                        autoDisplay: false
+                    }, 'google_translate_element');
+        
+                    const lang = getPreferredLanguage();
+                    setTimeout(() => setLanguage(lang, true), 500);
                 }
-                toggleLanguageDropdown();
-            }
-            
-            function toggleLanguageDropdown() {
-                const dropdown = document.getElementById('languageDropdown');
-                dropdown.classList.toggle('show');
-            }
-            
-            // Close dropdown when clicking outside
-            window.onclick = function(event) {
-                if (!event.target.matches('.language-dropdown-btn') && !event.target.matches('.language-dropdown-btn *')) {
-                    const dropdowns = document.getElementsByClassName('language-dropdown-menu');
-                    for (let i = 0; i < dropdowns.length; i++) {
-                        dropdowns[i].classList.remove('show');
+        
+                function getPreferredLanguage() {
+                    if (SESSION_LANGUAGE && SESSION_LANGUAGE !== 'undefined') return SESSION_LANGUAGE;
+                    return localStorage.getItem('selectedLanguage') || 'en';
+                }
+        
+                function setLanguage(lang, isInit) {
+                    const combo = document.querySelector('.goog-te-combo');
+                    if (!combo) {
+                        setTimeout(() => setLanguage(lang, isInit), 200);
+                        return;
+                    }
+        
+                    combo.value = lang;
+                    combo.dispatchEvent(new Event('change'));
+                    document.getElementById('currentLanguage').textContent =
+                        LANGUAGE_NAMES[lang] || LANGUAGE_NAMES['en'];
+        
+                    if (!isInit) {
+                        localStorage.setItem('selectedLanguage', lang);
+                        fetch('/set-language', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ lang })
+                        }).catch(() => {});
+                        toggleLanguageDropdown(false);
                     }
                 }
-            }
+        
+                function changeLanguage(lang) {
+                    setLanguage(lang, false);
+                }
+        
+                function toggleLanguageDropdown(forceClose) {
+                    const dropdown = document.getElementById('languageDropdown');
+                    if (forceClose === false) dropdown.classList.remove('show');
+                    else dropdown.classList.toggle('show');
+                }
+        
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('.custom-language-selector')) {
+                        toggleLanguageDropdown(false);
+                    }
+                });
             </script>
-            
-            <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>            
-        </footer>
+        
+            <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+        </footer>        
 
         <script>
         // Allow Dropdown to handle delay to increase usability

@@ -45,6 +45,11 @@ const knex = require("knex")({
     if (!val) return defaultVal;
     return Array.isArray(val) ? val : [val];
     }
+    // language functionality
+    app.use((req, res, next) => {
+        res.locals.language = req.session.language || 'en';
+        next();
+    });
 
 // MIDDLEWARE:
 app.use(express.urlencoded({ extended: true })); // Makes working with HTML forms a lot easier. Takes inputs and stores them in req.body (for post) or req.query (for get).
@@ -144,6 +149,22 @@ app.use((req, res, next) => {
         });
         });
 
+    // LANGUAGE BOXES: 
+    app.post('/set-language', (req, res) => {
+            const { lang } = req.body;
+        
+            // simple validation: only allow expected languages
+            const allowedLangs = ['en','es','fr','de','pt','ar','zh-CN','ja','ko'];
+        
+            if (!allowedLangs.includes(lang)) {
+            return res.status(400).json({ success: false, message: 'Invalid language' });
+            }
+        
+            req.session.language = lang;
+            res.json({ success: true });
+        });
+
+    
     /* ROUTES */
     // HOME PAGE: general landing page that displays information about the company
     app.get("/", (req, res) => {
