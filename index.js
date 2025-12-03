@@ -146,7 +146,7 @@
             
             // Get all events in the next 3 months using Knex
             const events = await knex('events')
-                .select('event_id','event_name','event_date','event_start_time','event_end_time','event_location','event_capacity','event_registration_deadline_date','event_registration_deadline_time')
+                .select('event_id','event_name','event_date','event_start_time','event_end_time','event_location','event_capacity','registration_deadline_date','registration_deadline_time')
                 .where('event_date', '>=', startDateStr)
                 .where('event_date', '<=', endDateStr)
                 .orderBy('event_date', 'asc')
@@ -214,7 +214,7 @@
                             capacity: event.event_capacity,
                             registered_count: event.registered_count,
                             user_registered: event.user_registered,
-                            registration_deadline: event.event_registration_deadline_date
+                            registration_deadline: event.registration_deadline_date
                         };
                         monthEvents[dateKey].push(formattedEvent);
                     }
