@@ -45,28 +45,19 @@
 // MIDDLEWARE:
     app.use(express.urlencoded({ extended: true })); // Makes working with HTML forms a lot easier. Takes inputs and stores them in req.body (for post) or req.query (for get).
 
-    // SESSION MIDDLEWARE: (Needed for login functionality)
-    app.use( // allows you to use session variables
-        session({
-            secret: process.env.SESSION_SECRET || 'fallback-secret-key',
-            resave: false, 
-            saveUninitialized: false, 
-        })
-    );
-
-    // Content Security Policy middleware - allows localhost connections for development 
-    app.use((req, res, next) => { 
-        res.setHeader(
-        'Content-Security-Policy',
-        "default-src 'self' http://localhost:* ws://localhost:* wss://localhost:*; " +
-        "connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:*; " +
-        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
-        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
-        "img-src 'self' data: https:; " +
-        "font-src 'self' https://cdn.jsdelivr.net;"
-        );
-        next();
-    });
+    // // Content Security Policy middleware - allows localhost connections for development 
+    // app.use((req, res, next) => { 
+    //     res.setHeader(
+    //     'Content-Security-Policy',
+    //     "default-src 'self' http://localhost:* ws://localhost:* wss://localhost:*; " +
+    //     "connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:*; " +
+    //     "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
+    //     "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
+    //     "img-src 'self' data: https:; " +
+    //     "font-src 'self' https://cdn.jsdelivr.net;"
+    //     );
+    //     next();
+    // });
 
     // Global authentication middleware - runs on EVERY request (Needed for login functionality)
     app.use((req, res, next) => {
