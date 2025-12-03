@@ -45,6 +45,45 @@
 // MIDDLEWARE:
     app.use(express.urlencoded({ extended: true })); // Makes working with HTML forms a lot easier. Takes inputs and stores them in req.body (for post) or req.query (for get).
 
+    // SESSION MIDDLEWARE: (Needed for login functionality)
+    app.use( // allows you to use session variables
+        session({
+            secret: process.env.SESSION_SECRET || 'fallback-secret-key',
+            resave: false, 
+            saveUninitialized: false, 
+        })
+    );
+
+    // Content Security Policy middleware - allows localhost connections for development 
+    app.use((req, res, next) => { 
+        res.setHeader(
+        'Content-Security-Policy',
+        "default-src 'self' http://localhost:* ws://localhost:* wss://localhost:*; " +
+        "connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:*; " +
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
+        "img-src 'self' data: https:; " +
+        "font-src 'self' https://cdn.jsdelivr.net;"
+        );
+        next();
+    });
+
+    // Global authentication middleware - runs on EVERY request (Needed for login functionality)
+    app.use((req, res, next) => {
+        // Skip authentication for specific login routes
+        if (req.path === '/' || req.path === '/login' || req.path === '/logout' || req.path === '/signUp') {
+            //continue with the request path
+            return next();
+        }
+
+        // Check if user is logged in for all other routes
+        if (req.session.isLoggedIn) {
+            next(); // User is logged in, continue
+        } 
+        else {
+            res.render("login", { error_message: "Please log in to access this page" });
+        }
+    });
 /* ROUTES */
 // HOME PAGE: general landing page that displays information about the company
     app.get("/", (req, res) => {
