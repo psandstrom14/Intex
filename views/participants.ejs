@@ -356,7 +356,7 @@
                                 <tr>
                                     <!--UPDATE LATER: only display checkbox (only next row) if user is admin-->
                                     <td><input type="checkbox" class="row-checkbox" value="<%= p.participant_id %>" data-name="<%= p.participant_first_name %> <%= p.participant_last_name %>"></td>
-                                    <td><%= p.participant_first_name %></td>
+                                    <td><a href="/personal/<%= p.participant_id%>"><%= p.participant_first_name %></a></td>
                                     <td><%= p.participant_last_name %></td>
                                     <td><%= p.participant_username %></td>
                                     <td><%= p.participant_email %></td>

@@ -10,17 +10,17 @@ let bodyParser = require("body-parser"); // BODY-PARSER: Allows you to read the 
 const knex = require("knex")({ // KNEX: allows you to work with SQL databases
     client: "pg", // connect to PostgreSQL (put database name here if something else)
     connection: { // connect to the database. If you deploy this to an internet host, you need to use process.env.DATABASE_URL
-        host: process.env.RDS_HOSTNAME || "awseb-e-zmtvhhdgpm-stack-awsebrdsdatabase-cjcdmyxevp9y.c128cucaotxd.us-east-2.rds.amazonaws.com",
-        user: process.env.RDS_USERNAME || "intex214",
-        password: process.env.RDS_PASSWORD || "Hopethisworks1",
-        database: process.env.RDS_DB_NAME || "ebdb",
-        port: process.env.RDS_PORT || 5432,
-        ssl: { rejectUnauthorized: false }
-        // host: "localhost",
-        // user: "postgres",
-        // password: "admin",
-        // database: "EllaRises",
-        // port: 5432
+        // host: process.env.RDS_HOSTNAME || "awseb-e-zmtvhhdgpm-stack-awsebrdsdatabase-cjcdmyxevp9y.c128cucaotxd.us-east-2.rds.amazonaws.com",
+        // user: process.env.RDS_USERNAME || "intex214",
+        // password: process.env.RDS_PASSWORD || "Hopethisworks1",
+        // database: process.env.RDS_DB_NAME || "ebdb",
+        // port: process.env.RDS_PORT || 5432,
+        // ssl: { rejectUnauthorized: false }
+        host: "localhost",
+        user: "postgres",
+        password: "admin",
+        database: "EllaRises",
+        port: 5432
     }
 });
 
@@ -592,6 +592,125 @@ app.post("/add/:table", async (req, res) => {
             res.status(500).json({ error: err.message });
         }
     });
+
+    // PERSONAL PAGE:
+    // GET route for personal dashboard
+app.get('/personal/:id', async (req, res) => {
+    const participantId = req.params.id;
+    
+    try {
+        // Get participant information with total donations
+        const participant = await knex('participants')
+            .leftJoin('donations', 'participants.participant_id', 'donations.participant_id')
+            .where('participants.participant_id', participantId)
+            .groupBy('participants.participant_id')
+            .select(
+                'participants.participant_id',
+                'participants.participant_email',
+                'participants.participant_first_name',
+                'participants.participant_last_name',
+                'participants.participant_dob',
+                'participants.participant_role',
+                'participants.participant_phone',
+                'participants.participant_city',
+                'participants.participant_state',
+                'participants.participant_zip',
+                'participants.participant_school_or_employer',
+                'participants.participant_field_of_interest',
+                'participants.participant_username',
+                knex.raw('COALESCE(SUM(donations.donation_amount), 0) as "Total_Donations"')
+            )
+            .first();
+        
+        // Check if participant exists
+        if (!participant) {
+            return res.status(404).send('Participant not found');
+        }
+        
+        // Convert Total_Donations to a number
+        participant.Total_Donations = parseFloat(participant.Total_Donations) || 0;
+        
+        // Get milestones sorted by most recent first
+        const milestones = await knex('milestones')
+            .where('participant_id', participantId)
+            .select('milestone_id', 'milestone_title', 'milestone_date', 'milestone_category')
+            .orderBy('milestone_date', 'desc');
+        
+        // Get donations sorted by most recent first
+        const donations = await knex('donations')
+            .where('participant_id', participantId)
+            .select('donation_id', 'donation_date', 'donation_amount')
+            .orderBy('donation_date', 'desc');
+        
+        // Convert donation amounts to numbers
+        donations.forEach(donation => {
+            donation.donation_amount = parseFloat(donation.donation_amount) || 0;
+        });
+        
+        // Get event registrations sorted by most recent first
+        const eventRegistrations = await knex('event_registrations')
+            .where('participant_id', participantId)
+            .select(
+                'event_registration_id',
+                'participant_id',
+                'event_id',
+                'registration_status',
+                'registration_attended_flag',
+                'registration_created_at_date',
+                'registration_created_at_time',
+                'registration_check_in_date',
+                'registration_check_in_time'
+            )
+            .orderBy([
+                { column: 'registration_created_at_date', order: 'desc' },
+                { column: 'registration_created_at_time', order: 'desc' }
+            ]);
+        
+        // Get survey results through event_registrations join
+        const surveys = await knex('survey_results as sr')
+            .innerJoin('event_registrations as er', 'sr.event_registration_id', 'er.event_registration_id')
+            .where('er.participant_id', participantId)
+            .select(
+                'sr.survey_id',
+                'sr.event_registration_id',
+                'sr.survey_satisfaction_score',
+                'sr.survey_usefulness_score',
+                'sr.survey_instructor_score',
+                'sr.survey_recommendation_score',
+                'sr.survey_overall_score',
+                'sr.survey_nps_bucket',
+                'sr.survey_comments',
+                'sr.submission_date',
+                'sr.submission_time'
+            )
+            .orderBy([
+                { column: 'sr.submission_date', order: 'desc' },
+                { column: 'sr.submission_time', order: 'desc' }
+            ]);
+        
+        // Convert survey scores to numbers
+        surveys.forEach(survey => {
+            survey.survey_satisfaction_score = parseFloat(survey.survey_satisfaction_score) || null;
+            survey.survey_usefulness_score = parseFloat(survey.survey_usefulness_score) || null;
+            survey.survey_instructor_score = parseFloat(survey.survey_instructor_score) || null;
+            survey.survey_recommendation_score = parseFloat(survey.survey_recommendation_score) || null;
+            survey.survey_overall_score = parseFloat(survey.survey_overall_score) || null;
+        });
+        
+        // Render the page with all data
+        res.render('personal', {
+            participant: participant,
+            milestones: milestones,
+            donations: donations,
+            eventRegistrations: eventRegistrations,
+            surveys: surveys
+        });
+        
+    } catch (error) {
+        console.error('Error loading personal dashboard:', error);
+        res.status(500).send('Error loading personal dashboard');
+    }
+});
 
     // START TO LISTEN (& tell command line)
     app.listen(port, () => console.log("the server has started to listen"));

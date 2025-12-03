@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Dashboard - Ella Rises</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo"><a href="/">Ella Rises</a></div>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/about">About</a></li>
+                <li><a href="/donate_now" >Donate Now</a></li>
+                <li class="dropdown">
+                    <span class="dropdown-toggle">
+                        <a href="#" class="selected-nav">Pages ▾</a>
+                    </span>
+                    <ul class="dropdown-menu">
+                        <li><a href="/users">Users</a></li>
+                        <li><a href="/participants">Participants</a></li>
+                        <li><a href="/events">Events</a></li>
+                        <li><a href="/surveys">Surveys</a></li>
+                        <li><a href="/milestones">Milestones</a></li>
+                        <li><a href="/donations">Donations</a></li>
+                    </ul>
+                </li>
+                <li><a href="/login" class="login-btn">Login</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero hero-compact">
+        <div class="hero-content">
+            <h1><%= participant.participant_first_name %> <%= participant.participant_last_name %></h1>
+            <p class="hero-subtitle"><%= participant.participant_role || 'Participant' %></p>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="container" style="max-width: 1400px; margin-top: 2rem; margin-bottom: 4rem;">
+        
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <button class="tab-btn active" data-tab="profile">Profile Information</button>
+            <button class="tab-btn" data-tab="milestones">Milestones</button>
+            <button class="tab-btn" data-tab="donations">Donations</button>
+            <button class="tab-btn" data-tab="events">Event Registrations</button>
+            <button class="tab-btn" data-tab="surveys">Survey Results</button>
+        </div>
+
+        <!-- Profile Information Tab -->
+        <div id="profile-tab" class="tab-content active">
+            <!-- Detailed Information -->
+            <div class="profile-sections-grid">
+                <!-- Location Information -->
+                <div class="card profile-section-card">
+                    <div class="card-header">
+                        <h3 class="profile-section-title">Location</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="profile-section-content">
+                            <div class="profile-item">
+                                <label class="profile-label">City</label>
+                                <div class="profile-value"><%= participant.participant_city || 'None' %></div>
+                            </div>
+                            <div class="profile-item">
+                                <label class="profile-label">State</label>
+                                <div class="profile-value"><%= participant.participant_state || 'None' %></div>
+                            </div>
+                            <div class="profile-item">
+                                <label class="profile-label">ZIP Code</label>
+                                <div class="profile-value"><%= participant.participant_zip || 'None' %></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="card profile-section-card">
+                    <div class="card-header">
+                        <h3 class="profile-section-title">Contact Information</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="profile-section-content">
+                            <div class="profile-item">
+                                <label class="profile-label">Phone</label>
+                                <div class="profile-value"><%= participant.participant_phone || 'None' %></div>
+                            </div>
+                            <div class="profile-item">
+                                <label class="profile-label">Email</label>
+                                <div class="profile-value"><%= participant.participant_email || 'None' %></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Login Information -->
+                <div class="card profile-section-card">
+                    <div class="card-header">
+                        <h3 class="profile-section-title">Login Information</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="profile-section-content">
+                            <div class="profile-item">
+                                <label class="profile-label">Username</label>
+                                <div class="profile-value"><%= participant.participant_username || 'None' %></div>
+                            </div>
+                            <div class="profile-item">
+                                <label class="profile-label">Role</label>
+                                <div class="profile-value"><%= participant.participant_role || 'None' %></div>
+                            </div>
+                            <div class="profile-item">
+                                <label class="profile-label">Participant ID</label>
+                                <div class="profile-value">#<%= participant.participant_id %></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Personal Details -->
+                <div class="card profile-section-card">
+                    <div class="card-header">
+                        <h3 class="profile-section-title">Personal Details</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="profile-section-content">
+                            <div class="profile-item">
+                                <label class="profile-label">Date of Birth</label>
+                                <div class="profile-value"><%= participant.participant_dob ? new Date(participant.participant_dob).toLocaleDateString() : 'None' %></div>
+                            </div>
+                            <div class="profile-item">
+                                <label class="profile-label">School/Employer</label>
+                                <div class="profile-value"><%= participant.participant_school_or_employer || 'None' %></div>
+                            </div>
+                            <div class="profile-item">
+                                <label class="profile-label">Field of Interest</label>
+                                <div class="profile-value"><%= participant.participant_field_of_interest || 'None' %></div>
+                            </div>
+                            <div class="profile-item">
+                                <label class="profile-label">Donation Totals</label>
+                                <div class="profile-value <%= participant.Total_Donations > 0 ? 'profile-value-donations' : '' %>">
+                                    $<%= participant.Total_Donations ? participant.Total_Donations.toFixed(2) : '0.00' %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="profile-actions">
+                <form method="POST" action="/edit/participants/<%= participant.participant_id %>" style="display: inline;">
+                    <button type="submit" class="btn btn-primary">Edit Profile</button>
+                </form>
+                <button onclick="showDeleteUserModal()" class="btn btn-danger">Delete User</button>
+            </div>
+        </div>
+
+        <!-- Milestones Tab -->
+        <div id="milestones-tab" class="tab-content">
+            <div class="table-container">
+                <div class="table-header">
+                    <h2 class="table-title">Milestones</h2>
+                    <div class="table-actions">
+                        <form method="POST" action="/add/milestones/<%= participant.participant_id %>" style="display: inline;">
+                            <button type="submit" class="btn btn-add">Add Milestone</button>
+                        </form>
+                        <button id="milestones-edit-btn" class="btn btn-secondary" style="display: none;">Edit Selected</button>
+                        <button id="milestones-delete-btn" class="btn btn-danger" style="display: none;">Delete Selected</button>
+                    </div>
+                </div>
+                <% if (milestones && milestones.length > 0) { %>
+                <div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="milestones-select-all"></th>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% milestones.forEach(function(milestone) { %>
+                            <tr>
+                                <td><input type="checkbox" class="row-checkbox milestones-checkbox" data-id="<%= milestone.milestone_id %>"></td>
+                                <td><%= milestone.milestone_title %></td>
+                                <td><span class="badge badge-primary"><%= milestone.milestone_category || 'General' %></span></td>
+                                <td><%= milestone.milestone_date ? new Date(milestone.milestone_date).toLocaleDateString() : 'N/A' %></td>
+                            </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+                <% } else { %>
+                <div class="empty-state">
+                    <h2>No Milestones Yet</h2>
+                    <p>Start tracking achievements by adding a milestone.</p>
+                </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Donations Tab -->
+        <div id="donations-tab" class="tab-content">
+            <div class="table-container">
+                <div class="table-header">
+                    <h2 class="table-title">Donations</h2>
+                    <div class="table-actions">
+                        <form method="POST" action="/add/donations/<%= participant.participant_id %>" style="display: inline;">
+                            <button type="submit" class="btn btn-add">Add Donation</button>
+                        </form>
+                        <button id="donations-edit-btn" class="btn btn-secondary" style="display: none;">Edit Selected</button>
+                        <button id="donations-delete-btn" class="btn btn-danger" style="display: none;">Delete Selected</button>
+                    </div>
+                </div>
+                <% if (donations && donations.length > 0) { %>
+                <div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="donations-select-all"></th>
+                                <th>Date</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% donations.forEach(function(donation) { %>
+                            <tr>
+                                <td><input type="checkbox" class="row-checkbox donations-checkbox" data-id="<%= donation.donation_id %>"></td>
+                                <td><%= donation.donation_date ? new Date(donation.donation_date).toLocaleDateString() : 'N/A' %></td>
+                                <td class="text-success" style="font-weight: 600;">$<%= donation.donation_amount ? donation.donation_amount.toFixed(2) : '0.00' %></td>
+                            </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+                <% } else { %>
+                <div class="empty-state">
+                    <h2>No Donations</h2>
+                    <p>No donation records found for this participant.</p>
+                </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Event Registrations Tab -->
+        <div id="events-tab" class="tab-content">
+            <div class="table-container">
+                <div class="table-header">
+                    <h2 class="table-title">Event Registrations</h2>
+                    <div class="table-actions">
+                        <form method="POST" action="/add/event_registration/<%= participant.participant_id %>" style="display: inline;">
+                            <button type="submit" class="btn btn-add">Add Registration</button>
+                        </form>
+                        <button id="events-edit-btn" class="btn btn-secondary" style="display: none;">Edit Selected</button>
+                        <button id="events-delete-btn" class="btn btn-danger" style="display: none;">Delete Selected</button>
+                    </div>
+                </div>
+                <% if (eventRegistrations && eventRegistrations.length > 0) { %>
+                <div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="events-select-all"></th>
+                                <th>Registration ID</th>
+                                <th>Event ID</th>
+                                <th>Status</th>
+                                <th>Attended</th>
+                                <th>Registered</th>
+                                <th>Check-In</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% eventRegistrations.forEach(function(reg) { %>
+                            <tr>
+                                <td><input type="checkbox" class="row-checkbox events-checkbox" data-id="<%= reg.event_registration_id %>"></td>
+                                <td><%= reg.event_registration_id %></td>
+                                <td><%= reg.event_id %></td>
+                                <td><span class="badge <%= reg.registration_status === 'confirmed' ? 'badge-success' : 'badge-warning' %>"><%= reg.registration_status || 'Pending' %></span></td>
+                                <td><%= reg.registration_attended_flag ? '✓ Yes' : '✗ No' %></td>
+                                <td><%= reg.registration_created_at_date ? new Date(reg.registration_created_at_date).toLocaleDateString() : 'N/A' %></td>
+                                <td><%= reg.registration_check_in_date ? new Date(reg.registration_check_in_date).toLocaleDateString() : 'N/A' %></td>
+                            </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+                <% } else { %>
+                <div class="empty-state">
+                    <h2>No Event Registrations</h2>
+                    <p>This participant hasn't registered for any events yet.</p>
+                </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Survey Results Tab -->
+        <div id="surveys-tab" class="tab-content">
+            <div class="table-container">
+                <div class="table-header">
+                    <h2 class="table-title">Survey Results</h2>
+                </div>
+                <% if (surveys && surveys.length > 0) { %>
+                <div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Survey ID</th>
+                                <th>Registration ID</th>
+                                <th>Satisfaction</th>
+                                <th>Usefulness</th>
+                                <th>Instructor</th>
+                                <th>Recommendation</th>
+                                <th>Overall</th>
+                                <th>NPS Bucket</th>
+                                <th>Submitted</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% surveys.forEach(function(survey) { %>
+                            <tr>
+                                <td><%= survey.survey_id %></td>
+                                <td><%= survey.event_registration_id %></td>
+                                <td><%= survey.survey_satisfaction_score || 'N/A' %></td>
+                                <td><%= survey.survey_usefulness_score || 'N/A' %></td>
+                                <td><%= survey.survey_instructor_score || 'N/A' %></td>
+                                <td><%= survey.survey_recommendation_score || 'N/A' %></td>
+                                <td class="text-primary" style="font-weight: 600;"><%= survey.survey_overall_score || 'N/A' %></td>
+                                <td>
+                                    <% if (survey.survey_nps_bucket) { %>
+                                        <span class="badge <%= survey.survey_nps_bucket === 'Promoter' ? 'badge-success' : survey.survey_nps_bucket === 'Passive' ? 'badge-warning' : 'badge-danger' %>">
+                                            <%= survey.survey_nps_bucket %>
+                                        </span>
+                                    <% } else { %>
+                                        N/A
+                                    <% } %>
+                                </td>
+                                <td><%= survey.submission_date ? new Date(survey.submission_date).toLocaleDateString() : 'N/A' %></td>
+                            </tr>
+                            <% if (survey.survey_comments) { %>
+                            <tr class="survey-comments-row">
+                                <td colspan="9" style="background-color: #f9f5ea; padding: 1rem;">
+                                    <strong>Comments:</strong> <%= survey.survey_comments %>
+                                </td>
+                            </tr>
+                            <% } %>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+                <% } else { %>
+                <div class="empty-state">
+                    <h2>No Survey Results</h2>
+                    <p>No survey responses found for this participant.</p>
+                </div>
+                <% } %>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Confirm Deletion</h3>
+                <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the selected item(s)? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeDeleteModal()">Cancel</button>
+                <button id="confirmDeleteBtn" class="btn btn-danger">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete User Confirmation Modal -->
+    <div id="deleteUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">⚠️ Delete User Account</h3>
+                <button class="modal-close" onclick="closeDeleteUserModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--accent-dark); font-weight: 600; margin-bottom: 1rem;">This is a permanent action!</p>
+                <p>Are you sure you want to delete this user account? This will permanently remove:</p>
+                <ul style="margin: 1rem 0; padding-left: 2rem; line-height: 1.8;">
+                    <li>User profile and personal information</li>
+                    <li>All associated milestones</li>
+                    <li>All donation records</li>
+                    <li>All event registrations</li>
+                    <li>All survey responses</li>
+                </ul>
+                <p><strong>This action cannot be undone.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeDeleteUserModal()">Cancel</button>
+                <form method="POST" action="/delete/participants/<%= participant.participant_id %>" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Delete User Permanently</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 Ella Rises. All Rights Reserved.</p>
+        <p style="margin-top: 1rem; font-size: 0.9rem;">Making a difference, one woman at a time.</p>
+    </footer>
+
+    <script>
+        // Tab Switching
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabName = button.getAttribute('data-tab');
+                
+                // Remove active class from all buttons and contents
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                
+                // Add active class to clicked button and corresponding content
+                button.classList.add('active');
+                document.getElementById(`${tabName}-tab`).classList.add('active');
+            });
+        });
+
+        // Dropdown handling
+        let dropdownTimeout;
+        const dropdown = document.querySelector('.dropdown');
+        const dropdownMenu = document.querySelector('.dropdown-menu');
+
+        if (dropdown && dropdownMenu) {
+            dropdown.addEventListener('mouseenter', function() {
+                clearTimeout(dropdownTimeout);
+                dropdownMenu.style.display = 'block';
+            });
+
+            dropdown.addEventListener('mouseleave', function() {
+                dropdownTimeout = setTimeout(function() {
+                    dropdownMenu.style.display = 'none';
+                }, 200);
+            });
+
+            dropdownMenu.addEventListener('mouseenter', function() {
+                clearTimeout(dropdownTimeout);
+                dropdownMenu.style.display = 'block';
+            });
+
+            dropdownMenu.addEventListener('mouseleave', function() {
+                dropdownTimeout = setTimeout(function() {
+                    dropdownMenu.style.display = 'none';
+                }, 200);
+            });
+        }
+
+        // Checkbox management for each table
+        function setupCheckboxes(tablePrefix) {
+            const selectAll = document.getElementById(`${tablePrefix}-select-all`);
+            const checkboxes = document.querySelectorAll(`.${tablePrefix}-checkbox`);
+            const editBtn = document.getElementById(`${tablePrefix}-edit-btn`);
+            const deleteBtn = document.getElementById(`${tablePrefix}-delete-btn`);
+
+            if (!selectAll || !checkboxes.length) return;
+
+            // Select all functionality
+            selectAll.addEventListener('change', function() {
+                checkboxes.forEach(cb => cb.checked = this.checked);
+                updateButtons(tablePrefix);
+            });
+
+            // Individual checkbox functionality
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    updateButtons(tablePrefix);
+                    updateSelectAll(tablePrefix);
+                });
+            });
+
+            // Edit button functionality
+            if (editBtn) {
+                editBtn.addEventListener('click', function() {
+                    const selectedIds = Array.from(checkboxes)
+                        .filter(cb => cb.checked)
+                        .map(cb => cb.getAttribute('data-id'));
+                    
+                    if (selectedIds.length === 1) {
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = `/edit/${tablePrefix}/${selectedIds[0]}`;
+                        document.body.appendChild(form);
+                        form.submit();
+                    } else {
+                        alert('Please select exactly one item to edit.');
+                    }
+                });
+            }
+
+            // Delete button functionality
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', function() {
+                    const selectedIds = Array.from(checkboxes)
+                        .filter(cb => cb.checked)
+                        .map(cb => cb.getAttribute('data-id'));
+                    
+                    if (selectedIds.length > 0) {
+                        showDeleteModal(tablePrefix, selectedIds);
+                    }
+                });
+            }
+        }
+
+        function updateButtons(tablePrefix) {
+            const checkboxes = document.querySelectorAll(`.${tablePrefix}-checkbox`);
+            const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+            const editBtn = document.getElementById(`${tablePrefix}-edit-btn`);
+            const deleteBtn = document.getElementById(`${tablePrefix}-delete-btn`);
+
+            if (editBtn && deleteBtn) {
+                if (checkedCount > 0) {
+                    editBtn.style.display = 'inline-block';
+                    deleteBtn.style.display = 'inline-block';
+                } else {
+                    editBtn.style.display = 'none';
+                    deleteBtn.style.display = 'none';
+                }
+            }
+        }
+
+        function updateSelectAll(tablePrefix) {
+            const selectAll = document.getElementById(`${tablePrefix}-select-all`);
+            const checkboxes = document.querySelectorAll(`.${tablePrefix}-checkbox`);
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            const someChecked = Array.from(checkboxes).some(cb => cb.checked);
+
+            if (selectAll) {
+                selectAll.checked = allChecked;
+                selectAll.indeterminate = !allChecked && someChecked;
+            }
+        }
+
+        // Delete modal functionality
+        let currentDeleteType = '';
+        let currentDeleteIds = [];
+
+        function showDeleteModal(type, ids) {
+            currentDeleteType = type;
+            currentDeleteIds = ids;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+            currentDeleteType = '';
+            currentDeleteIds = [];
+        }
+
+        // Delete user modal functionality
+        function showDeleteUserModal() {
+            document.getElementById('deleteUserModal').classList.add('active');
+        }
+
+        function closeDeleteUserModal() {
+            document.getElementById('deleteUserModal').classList.remove('active');
+        }
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+            if (currentDeleteIds.length === 1) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/delete/${currentDeleteType}/${currentDeleteIds[0]}`;
+                document.body.appendChild(form);
+                form.submit();
+            } else {
+                alert('Please select exactly one item to delete.');
+                closeDeleteModal();
+            }
+        });
+
+        // Initialize checkboxes for all tables
+        setupCheckboxes('milestones');
+        setupCheckboxes('donations');
+        setupCheckboxes('events');
+    </script>
+</body>
+</html>
