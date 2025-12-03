@@ -13,32 +13,34 @@
     <!-- Navigation -->
     <nav>
       <div class="nav-container">
-          <div class="logo">
-              <a href="/"><img src="/images/logo.png" alt="Ella Rises Logo"> ELLA RISES</a>
-          </div>
-          <ul class="nav-links">
-              <li><a href="/">Home</a></li>
-              <li><a href="/about">About</a></li>
-              <li><a href="/performance">Performance</a></li>
-              <li><a href="/calendar">Calendar</a></li>
-              <li><a href="/donate_now">Donate Now</a></li>
-              <li class="dropdown">
-                  <span class="dropdown-toggle">
-                      <a href="#">Pages ▾</a>
-                  </span>
-                  <ul class="dropdown-menu">
-                      <li><a href="/users">Users</a></li>
-                      <li><a href="/participants">Participants</a></li>
-                      <li><a href="/events">Events</a></li>
-                      <li><a href="/surveys">Surveys</a></li>
-                      <li><a href="/milestones">Milestones</a></li>
-                      <li><a href="/donations">Donations</a></li>
-                  </ul>
-              </li>
-              <li><a href="/login" class="login-btn">Login</a></li>
-          </ul>
+        <div class="logo">
+          <a href="/"
+            ><img src="/images/logo.png" alt="Ella Rises Logo" /> ELLA RISES</a
+          >
+        </div>
+        <ul class="nav-links">
+          <li><a href="/">Home</a></li>
+          <li><a href="/about">About</a></li>
+          <li><a href="/performance">Performance</a></li>
+          <li><a href="/calendar">Calendar</a></li>
+          <li><a href="/donate_now">Donate Now</a></li>
+          <li class="dropdown">
+            <span class="dropdown-toggle">
+              <a href="#">Pages ▾</a>
+            </span>
+            <ul class="dropdown-menu">
+              <li><a href="/users">Users</a></li>
+              <li><a href="/participants">Participants</a></li>
+              <li><a href="/events">Events</a></li>
+              <li><a href="/surveys">Surveys</a></li>
+              <li><a href="/milestones">Milestones</a></li>
+              <li><a href="/donations">Donations</a></li>
+            </ul>
+          </li>
+          <li><a href="/login" class="login-btn">Login</a></li>
+        </ul>
       </div>
-  </nav>
+    </nav>
 
     <!-- Hero Section -->
     <section class="hero hero-compact login-hero">
@@ -47,6 +49,13 @@
         <p class="hero-subtitle">Sign in to access your account</p>
       </div>
     </section>
+
+    <!-- Add error message display here -->
+    <% if (typeof error_message !== 'undefined' && error_message) { %>
+    <div class="container login-error-container">
+      <div class="alert alert-danger"><%= error_message %></div>
+    </div>
+    <% } %>
 
     <!-- Login Form -->
     <div class="container">
@@ -98,9 +107,7 @@
     <!-- Footer -->
     <footer>
       <p>&copy; 2025 Ella Rises. All Rights Reserved.</p>
-      <p style="margin-top: 1rem; font-size: 0.9rem">
-        Making a difference, one woman at a time.
-      </p>
+      <p class="footer-subtext">Making a difference, one woman at a time.</p>
     </footer>
 
     <script>

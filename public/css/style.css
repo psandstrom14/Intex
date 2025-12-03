@@ -522,7 +522,7 @@ nav {
 
 .radio-label:has(input[type="radio"]:checked) {
   border-color: var(--powder-blue);
-  background-color:  #F2F6F8;
+  background-color: #f2f6f8;
   box-shadow: 0 2px 12px rgba(206, 50, 91, 0.15);
 }
 
@@ -878,8 +878,6 @@ tbody tr:has(.row-checkbox:checked):hover {
   background-color: rgba(249, 175, 177, 0.3) !important;
 }
 
-
-
 /* Table will try to fit all columns, shrinking as needed */
 table {
   width: 100%;
@@ -930,7 +928,7 @@ td:first-child {
 
 /* Add scroll indicator for better UX */
 .table-container > div:last-child::after {
-  content: '→ Scroll for more';
+  content: "→ Scroll for more";
   position: sticky;
   right: 0;
   bottom: 10px;
@@ -947,8 +945,6 @@ td:first-child {
 .table-container > div:last-child:hover::after {
   opacity: 0.8;
 }
-
-
 
 /* Cards */
 .card {
@@ -1756,7 +1752,7 @@ footer .footer-subtext {
 }
 
 .tab-btn:hover {
-  color: var(--powder-blue); 
+  color: var(--powder-blue);
   background-color: white;
 }
 
@@ -2312,7 +2308,7 @@ footer .footer-subtext {
   .calendar-nav-prev {
     left: -60px;
   }
-  
+
   .calendar-nav-next {
     right: -60px;
   }
@@ -2322,11 +2318,11 @@ footer .footer-subtext {
   .calendar-nav-prev {
     left: 10px;
   }
-  
+
   .calendar-nav-next {
     right: 10px;
   }
-  
+
   .calendar-nav-btn {
     width: 40px;
     height: 40px;
@@ -2418,17 +2414,17 @@ footer .footer-subtext {
   .calendar-event-time {
     font-size: 0.5rem;
   }
-  
+
   .calendar-nav-btn {
     width: 35px;
     height: 35px;
     font-size: 1rem;
   }
-  
+
   .calendar-nav-prev {
     left: 5px;
   }
-  
+
   .calendar-nav-next {
     right: 5px;
   }
@@ -2566,14 +2562,14 @@ footer .footer-subtext {
 
 @media (max-width: 768px) {
   .calendar-legend {
-      flex-direction: column;
-      gap: 1rem;
-      padding: 1.5rem;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.5rem;
   }
-  
+
   .calendar-legend-title {
-      margin-right: 0;
-      margin-bottom: 0.5rem;
+    margin-right: 0;
+    margin-bottom: 0.5rem;
   }
 }
 
@@ -2645,12 +2641,12 @@ body {
 
 @keyframes fadeIn {
   from {
-      opacity: 0;
-      transform: translateY(10px);
+    opacity: 0;
+    transform: translateY(10px);
   }
   to {
-      opacity: 1;
-      transform: translateY(0);
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -2673,11 +2669,15 @@ body {
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .language-dropdown-btn {
-      padding: 0.5rem 1.2rem;
-      font-size: 0.85rem;
+    padding: 0.5rem 1.2rem;
+    font-size: 0.85rem;
   }
-  
+
   .language-dropdown-menu {
-      min-width: 180px;
+    min-width: 180px;
   }
+}
+
+.login-error-container {
+  margin-top: 2rem;
 }
