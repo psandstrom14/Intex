@@ -1,0 +1,691 @@
+<!--Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom-->
+<!--This page will display add forms, and allow CRUD (for managers) + Search Capabilities.-->
+<!--This page will only be visible to users who are logged in.-->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add <%= table_name %> - Ella Rises</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo"><a href="/">Ella Rises</a></div>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/about">About</a></li>
+                <li><a href="/donate_now" >Donate Now</a></li>
+                <li class="dropdown">
+                    <span class="dropdown-toggle">
+                        <a href="#" class="selected-nav">Pages ▾</a>
+                    </span>
+                    <ul class="dropdown-menu">
+                        <li><a href="/users">Users</a></li>
+                        <li><a href="/participants">Participants</a></li>
+                        <li><a href="/events">Events</a></li>
+                        <li><a href="/surveys">Surveys</a></li>
+                        <li><a href="/milestones">Milestones</a></li>
+                        <li><a href="/donations">Donations</a></li>
+                    </ul>
+                </li>
+                <li><a href="/login" class="login-btn">Login</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero hero-compact">
+        <div class="hero-content">
+            <% if (table_name = "survey_results") {
+                %><h1>Edit Survey %></h1>
+            <% }else {
+                %><h1>Edit <%= table_name.charAt(0).toUpperCase() + table_name.slice(1, -1) %></h1>
+            }
+            
+            <p class="hero-subtitle">Fill in the details below to create a new record</p>
+        </div>
+    </section>
+
+    <!--Main Content-->
+    <div class="container">
+        <div class="add-card">
+            <!-- Add-Participant Form -->
+            <%if (table_name === "participants"){%>
+                <form id="addForm" class="modern-form" method="POST" action="/add/participants">
+                    
+                    <div class="form-section">
+                        <h2 class="section-title">Basic Information</h2>
+                        <p class="section-description">Enter the participant's personal details</p>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">First Name <span class="required">*</span></label>
+                                <input type="text" class="form-input" name="participant_first_name" placeholder="John" required autofocus>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Last Name <span class="required">*</span></label>
+                                <input type="text" class="form-input" name="participant_last_name" placeholder="Doe" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Username <span class="required">*</span></label>
+                                <input type="text" class="form-input" name="participant_username" placeholder="jdoe" required>
+                                <span class="form-hint">Used for login</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Password <span class="required">*</span></label>
+                                <input type="password" class="form-input" name="participant_password" placeholder="••••••••" required>
+                                <span class="form-hint">Minimum 8 characters</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Participant Role <span class="required">*</span></label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="participant_role" value="admin" required>
+                                    <span class="radio-custom"></span>
+                                    <span class="radio-text">
+                                        <strong>Admin</strong>
+                                        <small>Full access to all features</small>
+                                    </span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="participant_role" value="participant" required checked>
+                                    <span class="radio-custom"></span>
+                                    <span class="radio-text">
+                                        <strong>Participant</strong>
+                                        <small>Standard participant access</small>
+                                    </span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="participant_role" value="donor" required>
+                                    <span class="radio-custom"></span>
+                                    <span class="radio-text">
+                                        <strong>Donor</strong>
+                                        <small>Donor portal access</small>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h2 class="section-title">Contact Details</h2>
+                        <p class="section-description">How can we reach this participant?</p>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Phone Number <span class="required">*</span></label>
+                                <input type="tel" class="form-input" name="participant_phone" placeholder="(123) 456-7890" pattern="[0-9]{10}" required>
+                                <span class="form-hint">10 digits, no formatting</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Email Address <span class="required">*</span></label>
+                                <input type="email" class="form-input" name="participant_email" placeholder="example@email.com" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h2 class="section-title">Location & Background</h2>
+                        <p class="section-description">Tell us more about the participant</p>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">City <span class="required">*</span></label>
+                                <input list="cities" class="form-input" name="participant_city" placeholder="Select or type city" required>
+                                <datalist id="cities">
+                                    <option value="Bountiful">
+                                    <option value="Draper">
+                                    <option value="Layton">
+                                    <option value="Lehi">
+                                    <option value="Logan">
+                                    <option value="Murray">
+                                    <option value="Ogden">
+                                    <option value="Orem">
+                                    <option value="Pleasant Grove">
+                                    <option value="Provo">
+                                    <option value="Riverton">
+                                    <option value="Salt Lake City">
+                                    <option value="Sandy">
+                                    <option value="Spanish Fork">
+                                    <option value="St. George">
+                                    <option value="Taylorsville">
+                                    <option value="West Jordan">
+                                    <option value="West Valley City">
+                                </datalist>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Zip Code <span class="required">*</span></label>
+                                <input type="text" class="form-input" name="participant_zip" placeholder="84601" pattern="[0-9]{5}" maxlength="5" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">School or Employer</label>
+                            <input type="text" class="form-input" name="participant_school_or_employer" placeholder="e.g., BYU, Tech Company">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Date of Birth</label>
+                            <input type="date" class="form-input" name="participant_dob">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Field of Interest</label>
+                            <div class="radio-group radio-group-inline">
+                                <label class="radio-label">
+                                    <input type="radio" name="participant_field_of_interest" value="STEM">
+                                    <span class="radio-custom"></span>
+                                    <span class="radio-text"><strong>STEM</strong></span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="participant_field_of_interest" value="Arts">
+                                    <span class="radio-custom"></span>
+                                    <span class="radio-text"><strong>Arts</strong></span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="participant_field_of_interest" value="Both">
+                                    <span class="radio-custom"></span>
+                                    <span class="radio-text"><strong>Both</strong></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="/participants" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Add Participant</button>
+                    </div>
+                </form>
+
+            <!-- Add-Events Form -->
+            <%} else if (table_name === "events"){%>
+                <form id="addForm" class="modern-form" action="/add/events" method="POST">
+                    
+                    <div class="form-section">
+                        <h2 class="section-title">Event Details</h2>
+                        <p class="section-description">Basic information about the event</p>
+
+                        <div class="form-group">
+                            <label class="form-label">Event Name <span class="required">*</span></label>
+                            <select class="form-select" name="event_id" id="eventSelect" required>
+                                <option value="">Select an Event</option>
+                                <option value="1">Mentor Office Hours</option>
+                                <option value="2">Robotics Lab Saturday</option>
+                                <option value="3">Girls in STEAM Mentoring</option>
+                                <option value="4">Monthly Coding Club</option>
+                                <option value="5">Intro to Painting Class</option>
+                                <option value="6">Data Science Study Group</option>
+                                <option value="7">Leadership Circle Meetup</option>
+                                <option value="8">Web Dev Bootcamp Night</option>
+                                <option value="9">Ella Rises Annual Leadership Conference</option>
+                                <option value="10">Monthly Art Studio Workshop</option>
+                                <option value="11">STEAM Summit & Expo</option>
+                                <option value="12">AI for Beginners Bootcamp</option>
+                                <option value="13">Digital Design Workshop</option>
+                                <option value="14">Community STEM Hackathon</option>
+                                <option value="15">Women in Tech & Art Showcase</option>
+                            </select>
+                            <input type="hidden" name="event_name" id="eventNameInput">    
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Location <span class="required">*</span></label>
+                            <input list="locations" class="form-input" name="event_location" placeholder="Select or type location" required>
+                            <datalist id="locations">
+                                <option value="Ella Rises HQ">
+                                <option value="Virtual Zoom">
+                                <option value="Art Studio 2">
+                                <option value="Community Center Room A">
+                                <option value="Local Library">
+                            </datalist>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Event Capacity <span class="required">*</span></label>
+                            <input type="number" class="form-input" name="event_capacity" placeholder="Maximum attendees" min="1" max="500" required>
+                            <span class="form-hint">Maximum number of participants</span>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h2 class="section-title">Schedule</h2>
+                        <p class="section-description">When will this event take place?</p>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Event Date <span class="required">*</span></label>
+                            <input type="date" class="form-input" name="date" required>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Start Time <span class="required">*</span></label>
+                                <input type="time" class="form-input" name="event_start_time" id="startTime" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">End Time <span class="required">*</span></label>
+                                <input type="time" class="form-input" name="event_end_time" id="endTime" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h2 class="section-title">Registration</h2>
+                        <p class="section-description">Set the registration deadline</p>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Deadline Date <span class="required">*</span></label>
+                                <input type="date" class="form-input" name="event_registration_deadline_date" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Deadline Time <span class="required">*</span></label>
+                                <input type="time" class="form-input" name="event_registration_deadline_time" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="/events" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Add Event</button>
+                    </div>
+                </form>
+
+            <!-- Add-survey Form -->
+            <%} else if (table_name === "surveys"){%>
+                <form id="addForm" class="modern-form" action="/add/surveys" method="POST">
+                    
+                    <div class="form-section">
+                        <h2 class="section-title">Participant Information</h2>
+                        <p class="section-description">Who is this survey for?</p>
+
+                        <div class="form-group">
+                            <label class="form-label">Participant ID <span class="required">*</span></label>
+                            <input type="number" class="form-input" name="participant_id" placeholder="Enter participant ID" min="1" required>
+                            <span class="form-hint">Must be an existing participant</span>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h2 class="section-title">Event Selection</h2>
+                        <p class="section-description">Select the event this survey relates to</p>
+
+                        <div class="form-group">
+                            <label class="form-label">Event Name <span class="required">*</span></label>
+                            <select class="form-select" name="event_name" id="eventSelect" required>
+                                <option value="">Select an Event</option>
+                                <option value="Mentor Office Hours">Mentor Office Hours</option>
+                                <option value="Robotics Lab Saturday">Robotics Lab Saturday</option>
+                                <option value="Girls in STEAM Mentoring">Girls in STEAM Mentoring</option>
+                                <option value="Monthly Coding Club">Monthly Coding Club</option>
+                                <option value="Intro to Painting Class">Intro to Painting Class</option>
+                                <option value="Data Science Study Group">Data Science Study Group</option>
+                                <option value="Leadership Circle Meetup">Leadership Circle Meetup</option>
+                                <option value="Web Dev Bootcamp Night">Web Dev Bootcamp Night</option>
+                                <option value="Ella Rises Annual Leadership Conference">Ella Rises Annual Leadership Conference</option>
+                                <option value="Monthly Art Studio Workshop">Monthly Art Studio Workshop</option>
+                                <option value="STEAM Summit & Expo">STEAM Summit & Expo</option>
+                                <option value="AI for Beginners Bootcamp">AI for Beginners Bootcamp</option>
+                                <option value="Digital Design Workshop">Digital Design Workshop</option>
+                                <option value="Community STEM Hackathon">Community STEM Hackathon</option>
+                                <option value="Women in Tech & Art Showcase">Women in Tech & Art Showcase</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Event Date & Time <span class="required">*</span></label>
+                            <select class="form-select" name="event_id" id="eventInstanceSelect" required disabled>
+                                <option value="">Select an event above first</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h2 class="section-title">Registration Status</h2>
+                        <p class="section-description">Update the participant's attendance status</p>
+
+                        <div class="form-group">
+                            <label class="form-label">Status <span class="required">*</span></label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="registration_status" value="attended" id="regStatusSelect" required>
+                                    <span class="radio-custom"></span>
+                                    <span class="radio-text">
+                                        <strong>Attended</strong>
+                                        <small>Participant was present</small>
+                                    </span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="registration_status" value="no-show" required>
+                                    <span class="radio-custom"></span>
+                                    <span class="radio-text">
+                                        <strong>No-Show</strong>
+                                        <small>Did not attend</small>
+                                    </span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="registration_status" value="cancelled" required>
+                                    <span class="radio-custom"></span>
+                                    <span class="radio-text">
+                                        <strong>Cancelled</strong>
+                                        <small>Registration cancelled</small>
+                                    </span>
+                                </label>
+                            </div>
+                            <input type="hidden" name="registration_attend_status" id="attendStatusHidden" value="">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="/surveys" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Add Survey Response</button>
+                    </div>
+                </form>
+
+            <!-- Add-milestones Form -->
+            <%} else if (table_name === "milestones"){%>
+                <form id="addForm" class="modern-form" action="/add/milestones" method="POST">
+                    
+                    <div class="form-section">
+                        <h2 class="section-title">Participant Information</h2>
+                        <p class="section-description">Who achieved this milestone?</p>
+
+                        <div class="form-group">
+                            <label class="form-label">Participant ID <span class="required">*</span></label>
+                            <input type="number" class="form-input" name="participant_id" placeholder="Enter participant ID" min="1" required>
+                            <span class="form-hint">Must be an existing participant</span>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h2 class="section-title">Milestone Details</h2>
+                        <p class="section-description">Describe the achievement</p>
+
+                        <div class="form-group">
+                            <label class="form-label">Milestone Title <span class="required">*</span></label>
+                            <input type="text" class="form-input" name="milestone_title" placeholder="e.g., Graduated with BS in Computer Science" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Milestone Category <span class="required">*</span></label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="milestone_category" value="secondary" required>
+                                    <span class="radio-custom"></span>
+                                    <span class="radio-text">
+                                        <strong>Secondary</strong>
+                                        <small>Middle school / High school</small>
+                                    </span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="milestone_category" value="undergraduate" required>
+                                    <span class="radio-custom"></span>
+                                    <span class="radio-text">
+                                        <strong>Undergraduate</strong>
+                                        <small>AA, AS, AAS, BA, BS</small>
+                                    </span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="milestone_category" value="graduate" required>
+                                    <span class="radio-custom"></span>
+                                    <span class="radio-text">
+                                        <strong>Graduate</strong>
+                                        <small>MS, MFA, MBA</small>
+                                    </span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="milestone_category" value="professional" required>
+                                    <span class="radio-custom"></span>
+                                    <span class="radio-text">
+                                        <strong>Professional</strong>
+                                        <small>Jobs, paid roles</small>
+                                    </span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="milestone_category" value="enrichment" required>
+                                    <span class="radio-custom"></span>
+                                    <span class="radio-text">
+                                        <strong>Enrichment</strong>
+                                        <small>Mentorships, awards, internships</small>
+                                    </span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="milestone_category" value="certificate" required>
+                                    <span class="radio-custom"></span>
+                                    <span class="radio-text">
+                                        <strong>Certificate Programs</strong>
+                                        <small>Any certificate program</small>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Milestone Date <span class="required">*</span></label>
+                            <input type="date" class="form-input" name="milestone_date" required>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="/milestones" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Add Milestone</button>
+                    </div>
+                </form>
+
+            <!--Add Donations Form-->
+            <%} else if (table_name === "donations"){%>
+                <form id="addForm" class="modern-form" action="/add/donations" method="POST">
+                    
+                    <div class="form-section">
+                        <h2 class="section-title">Donor Information</h2>
+                        <p class="section-description">Who made this donation?</p>
+
+                        <div class="form-group">
+                            <label class="form-label">Participant ID <span class="required">*</span></label>
+                            <input type="number" class="form-input" name="participant_id" placeholder="Enter participant ID" min="1" required>
+                            <span class="form-hint">Must be an existing participant</span>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h2 class="section-title">Donation Details</h2>
+                        <p class="section-description">Record the donation information</p>
+
+                        <div class="form-group">
+                            <label class="form-label">Donation Date <span class="required">*</span></label>
+                            <input type="date" class="form-input" name="donation_date" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Donation Amount <span class="required">*</span></label>
+                            <div class="input-with-prefix">
+                                <span class="input-prefix">$</span>
+                                <input type="number" class="form-input form-input-with-prefix" name="donation_amount" placeholder="0.00" min="0.01" step="0.01" required>
+                            </div>
+                            <span class="form-hint">Enter amount in USD</span>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="/donations" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Add Donation</button>
+                    </div>
+                </form>
+            <%} else { %>
+                <div class="empty-state">
+                    <h2>No Form Available</h2>
+                    <p>The requested form type is not available.</p>
+                    <a href="/" class="btn btn-primary">Return Home</a>
+                </div>
+            <%}%>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 Ella Rises. All Rights Reserved.</p>
+        <p style="margin-top: 1rem; font-size: 0.9rem;">Making a difference, one woman at a time.</p>
+    </footer>
+
+    <script>
+        const currentTable = "<%= table_name %>";
+
+        // ---------------- NAV DROPDOWN ----------------
+        let dropdownTimeout;
+        const dropdown = document.querySelector('.dropdown');
+        const dropdownMenu = document.querySelector('.dropdown-menu');
+
+        if (dropdown && dropdownMenu) {
+            dropdown.addEventListener('mouseenter', function() {
+                clearTimeout(dropdownTimeout);
+                dropdownMenu.style.display = 'block';
+            });
+
+            dropdown.addEventListener('mouseleave', function() {
+                dropdownTimeout = setTimeout(function() {
+                    dropdownMenu.style.display = 'none';
+                }, 200);
+            });
+
+            dropdownMenu.addEventListener('mouseenter', function() {
+                clearTimeout(dropdownTimeout);
+                dropdownMenu.style.display = 'block';
+            });
+
+            dropdownMenu.addEventListener('mouseleave', function() {
+                dropdownTimeout = setTimeout(function() {
+                    dropdownMenu.style.display = 'none';
+                }, 200);
+            });
+        }
+
+        // ---------------- EVENTS PAGE JS ----------------
+        if (currentTable === "events") {
+            const select = document.getElementById('eventSelect');
+            const eventNameInput = document.getElementById('eventNameInput');
+
+            if (select && eventNameInput) {
+                select.addEventListener('change', () => {
+                    const selectedOption = select.options[select.selectedIndex];
+                    eventNameInput.value = selectedOption.text;
+                });
+            }
+
+            const startTimeInput = document.getElementById("startTime");
+            const endTimeInput = document.getElementById("endTime");
+
+            if (startTimeInput && endTimeInput) {
+                startTimeInput.addEventListener("change", () => {
+                    const startValue = startTimeInput.value;
+                    endTimeInput.min = startValue;
+                    if (endTimeInput.value < startValue) {
+                        endTimeInput.value = "";
+                    }
+                });
+
+                endTimeInput.addEventListener("change", () => {
+                    if (endTimeInput.value < startTimeInput.value) {
+                        alert("End time cannot be earlier than start time.");
+                        endTimeInput.value = "";
+                    }
+                });
+            }
+        }
+
+        // ---------------- SURVEYS PAGE JS ----------------
+        if (currentTable === "surveys") {
+            const regInputs = document.querySelectorAll('input[name="registration_status"]');
+            const hiddenAttend = document.getElementById("attendStatusHidden");
+
+            if (regInputs && hiddenAttend) {
+                regInputs.forEach(input => {
+                    input.addEventListener("change", () => {
+                        hiddenAttend.value = (input.value === "attended") ? 1 : 0;
+                    });
+                });
+            }
+
+            const allEvents =  JSON.stringify(events || [])
+            const eventSelectSurvey = document.getElementById("eventSelect");
+            const eventInstanceSelect = document.getElementById("eventInstanceSelect");
+
+            function formatEventOption(ev) {
+                let label = ev.event_date;
+                if (ev.event_start_time && ev.event_end_time) {
+                    label += ` (${ev.event_start_time}–${ev.event_end_time})`;
+                } else if (ev.event_start_time) {
+                    label += ` (${ev.event_start_time})`;
+                }
+                return label;
+            }
+
+            if (eventSelectSurvey && eventInstanceSelect) {
+                eventSelectSurvey.addEventListener("change", () => {
+                    const selectedName = eventSelectSurvey.value;
+
+                    eventInstanceSelect.innerHTML = "";
+                    eventInstanceSelect.disabled = true;
+
+                    if (!selectedName) {
+                        const opt = document.createElement("option");
+                        opt.value = "";
+                        opt.textContent = "Select an event above first";
+                        eventInstanceSelect.appendChild(opt);
+                        return;
+                    }
+
+                    const matchingEvents = allEvents.filter(ev => ev.event_name === selectedName);
+
+                    if (matchingEvents.length === 0) {
+                        const opt = document.createElement("option");
+                        opt.value = "";
+                        opt.textContent = "No dates found for this event";
+                        eventInstanceSelect.appendChild(opt);
+                        return;
+                    }
+
+                    const defaultOpt = document.createElement("option");
+                    defaultOpt.value = "";
+                    defaultOpt.textContent = "Select a Date/Time";
+                    eventInstanceSelect.appendChild(defaultOpt);
+
+                    matchingEvents.forEach(ev => {
+                        const opt = document.createElement("option");
+                        opt.value = ev.event_id;
+                        opt.textContent = formatEventOption(ev);
+                        eventInstanceSelect.appendChild(opt);
+                    });
+
+                    eventInstanceSelect.disabled = false;
+                });
+            }
+        }
+
+        // ---------------- FORM ANIMATIONS ----------------
+        const formInputs = document.querySelectorAll('.form-input, .form-select');
+        formInputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('focused');
+            });
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('focused');
+            });
+        });
+    </script>
+</body>
+</html>

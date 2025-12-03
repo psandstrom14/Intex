@@ -7,7 +7,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Surveys - Ella Rises</title>
+    <title>Surveys - ß Rises</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -74,12 +74,13 @@
                         <!-- Search Dropdown -->
                         <div class="filter-item filter-column">
                             <select name="searchColumn" id="searchColumn" class="form-control">
+                                <option value="full_name" <%= filters.searchColumn === 'full_name' ? 'selected' : '' %>>Full Name</option>
                                 <option value="participant_first_name" <%= (filters.searchColumn === 'participant_first_name') ? 'selected' : (!filters.searchColumn ? 'selected' : '') %>>First Name</option>
                                 <option value="participant_last_name" <%= filters.searchColumn === 'participant_last_name' ? 'selected' : '' %>>Last Name</option>
                                 <option value="event_name" <%= filters.searchColumn === 'event_name' ? 'selected' : '' %>>Event Name</option>
                                 <option value="event_date" <%= filters.searchColumn === 'event_date' ? 'selected' : '' %>>Event Date</option>
-                                <option value="survey_nps_bucket" <%= filters.searchColumn === 'survey_nps_bucket' ? 'selected' : '' %>>NPS Bucket</option>
-                            </select>
+                                <option value="survey_nps_bucket" <%= filters.searchColumn === 'survey_nps_bucket' ? 'selected' : '' %>>Net Promoter Rating</option>
+                            </select>                            
                         </div>
 
                         <!-- Search Input + Buttons -->
@@ -130,6 +131,7 @@
                                             <%= ev %>
                                         </label>
                                     <% }); %>
+
                                 </div>
                             </div>
 
@@ -343,13 +345,13 @@
                             <th class="sortable" data-column="participant_last_name">Last Name <span class="sort-icon">⇅</span></th>
                             <th class="sortable" data-column="event_name">Event Name <span class="sort-icon">⇅</span></th>
                             <th class="sortable" data-column="event_date">Event Date <span class="sort-icon">⇅</span></th>
-                            <th class="sortable" data-column="survey_satisfaction_score">Satisfaction <span class="sort-icon">⇅</span></th>
-                            <th class="sortable" data-column="survey_usefulness_score">Usefulness <span class="sort-icon">⇅</span></th>
-                            <th class="sortable" data-column="survey_instructor_score">Instructor <span class="sort-icon">⇅</span></th>
-                            <th class="sortable" data-column="survey_recommendation_score">Recommendation <span class="sort-icon">⇅</span></th>
-                            <th class="sortable" data-column="survey_overall_score">Overall <span class="sort-icon">⇅</span></th>
-                            <th class="sortable" data-column="survey_nps_bucket">NPS Bucket <span class="sort-icon">⇅</span></th>
-                            <th>Comments</th>
+                            <th class="sortable" data-column="survey_satisfaction_score">Satisfaction Rating<span class="sort-icon">⇅</span></th>
+                            <th class="sortable" data-column="survey_usefulness_score">Usefulness Rating<span class="sort-icon">⇅</span></th>
+                            <th class="sortable" data-column="survey_instructor_score">Instructor Rating<span class="sort-icon">⇅</span></th>
+                            <th class="sortable" data-column="survey_recommendation_score">Recommendation Rating<span class="sort-icon">⇅</span></th>
+                            <th class="sortable" data-column="survey_overall_score">Overall Rating<span class="sort-icon">⇅</span></th>
+                            <th class="sortable" data-column="survey_nps_bucket">Net Promoter Rating <span class="sort-icon">⇅</span></th>
+                            <th class="sortable" data-column="survey_comments">Comments <span class="sort-icon">⇅</span></th>
                             <th class="sortable" data-column="survey_submission_date">Submission Date <span class="sort-icon">⇅</span></th>
                         </tr>
                     </thead>
@@ -417,6 +419,10 @@
     </footer>
 
     <script>
+        // Make filters object available to client-side JS
+        const filters = JSON.stringify(filters || {});
+
+
         // NAV DROPDOWN
         let dropdownTimeout;
         const dropdown = document.querySelector('.dropdown');
@@ -456,11 +462,24 @@
 
         const form = document.getElementById('surveysForm');
 
-        // FILTER TOGGLE (per-page key)
-        document.getElementById('toggleFilters').addEventListener('click', function() {
-            const filterSection = document.getElementById('filterSection');
-            const buttonText = document.getElementById('filterButtonText');
-            if (filterSection.style.display === 'none' || filterSection.style.display === '') {
+            // FILTER TOGGLE + RESTORE VISIBILITY
+    document.addEventListener('DOMContentLoaded', function () {
+        const filterSection = document.getElementById('filterSection');
+        const buttonText = document.getElementById('filterButtonText');
+        const toggleFiltersBtn = document.getElementById('toggleFilters');
+
+        if (!filterSection || !buttonText || !toggleFiltersBtn) {
+            // If any of these are missing, just bail to avoid errors
+            return;
+        }
+
+        // Click handler for the Filters button
+        toggleFiltersBtn.addEventListener('click', function () {
+            const isHidden =
+                filterSection.style.display === '' ||
+                filterSection.style.display === 'none';
+
+            if (isHidden) {
                 filterSection.style.display = 'block';
                 buttonText.textContent = 'Hide Filters';
                 sessionStorage.setItem('filtersVisible_surveys', 'true');
@@ -471,28 +490,30 @@
             }
         });
 
-        // On load: restore filter visibility if user had it open OR if there are active filters
-        document.addEventListener('DOMContentLoaded', function() {
-            const filterSection = document.getElementById('filterSection');
-            const buttonText = document.getElementById('filterButtonText');
-            const filtersVisible = sessionStorage.getItem('filtersVisible_surveys');
+        // Restore visibility on page load
+        const filtersVisible = sessionStorage.getItem('filtersVisible_surveys');
 
-            const hasActiveFilters =  (
-                (filters.searchValue && filters.searchValue.trim() !== '') ||
-                (filters.eventNames && filters.eventNames.length > 0 && !filters.eventNames.includes("all")) ||
-                (filters.satisfaction && filters.satisfaction.length > 0 && !filters.satisfaction.includes("all")) ||
-                (filters.usefulness && filters.usefulness.length > 0 && !filters.usefulness.includes("all")) ||
-                (filters.instructor && filters.instructor.length > 0 && !filters.instructor.includes("all")) ||
-                (filters.recommendation && filters.recommendation.length > 0 && !filters.recommendation.includes("all")) ||
-                (filters.overall && filters.overall.length > 0 && !filters.overall.includes("all")) ||
-                (filters.nps && filters.nps.length > 0 && !filters.nps.includes("all"))
-            ) ? "true" : "false";
+        const hasActiveFilters = !!(
+            (filters.searchValue && filters.searchValue.trim() !== '') ||
+            (filters.eventNames && filters.eventNames.length > 0 && !filters.eventNames.includes('all')) ||
+            (filters.satisfaction && filters.satisfaction.length > 0 && !filters.satisfaction.includes('all')) ||
+            (filters.usefulness && filters.usefulness.length > 0 && !filters.usefulness.includes('all')) ||
+            (filters.instructor && filters.instructor.length > 0 && !filters.instructor.includes('all')) ||
+            (filters.recommendation && filters.recommendation.length > 0 && !filters.recommendation.includes('all')) ||
+            (filters.overall && filters.overall.length > 0 && !filters.overall.includes('all')) ||
+            (filters.nps && filters.nps.length > 0 && !filters.nps.includes('all'))
+        );
 
-            if (filtersVisible === 'true' || (filtersVisible === null && hasActiveFilters === 'true')) {
-                filterSection.style.display = 'block';
-                buttonText.textContent = 'Hide Filters';
-            }
-        });
+        if (filtersVisible === 'true' || (filtersVisible === null && hasActiveFilters)) {
+            filterSection.style.display = 'block';
+            buttonText.textContent = 'Hide Filters';
+        } else {
+            // keep it hidden by default
+            filterSection.style.display = 'none';
+            buttonText.textContent = 'Filters';
+        }
+    });
+
 
         // SORTING
         let currentSortColumn = '<%= filters.sortColumn || "" %>';
@@ -639,7 +660,7 @@
                 form.method = 'POST';
                 form.action = '/delete-multiple';
 
-                // table name
+                // table name (logical name; backend maps "surveys" -> "survey_results")
                 const tableInput = document.createElement('input');
                 tableInput.type = 'hidden';
                 tableInput.name = 'table';

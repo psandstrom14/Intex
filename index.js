@@ -44,29 +44,6 @@ function paramToArray(val, defaultVal = ["all"]) {
   return Array.isArray(val) ? val : [val];
 }
 
-// For surveys: map logical column names (from UI) to real DB columns (with table aliases)
-const SURVEY_COLUMN_MAP = {
-  participant_first_name: "p.participant_first_name",
-  participant_last_name: "p.participant_last_name",
-  event_name: "e.event_name",
-  event_date: "e.event_date",
-  survey_satisfaction_score: "s.survey_satisfaction_score",
-  survey_usefulness_score: "s.survey_usefulness_score",
-  survey_instructor_score: "s.survey_instructor_score",
-  survey_recommendation_score: "s.survey_recommendation_score",
-  survey_overall_score: "s.survey_overall_score",
-  survey_nps_bucket: "s.survey_nps_bucket",
-  survey_submission_date: "s.survey_submission_date",
-};
-
-const SURVEY_SEARCHABLE_COLUMNS = [
-  "participant_first_name",
-  "participant_last_name",
-  "event_name",
-  "event_date",
-  "survey_nps_bucket",
-];
-
 // CREATE VARIABLES:
 let app = express(); // creates an express object called app
 const port = process.env.PORT || 3000; // Creates variable to store port. Uses .env variable "PORT". You can also just leave that out if aren't using .env
@@ -83,7 +60,14 @@ app.use(
   })
 );
 
-// MIDDLEWARE: (Middleware is code that runs between the time the request comes to the server and the time the response is sent back. It allows you to intercept and decide if the request should continue. It also allows you to parse the body request from the html form, handle errors, check authentication, etc.)
+// OTHER SETUP:
+// Ensures a value is returned as an array, using a default if value is empty.
+function paramToArray(val, defaultVal = ["all"]) {
+  if (!val) return defaultVal;
+  return Array.isArray(val) ? val : [val];
+}
+
+// MIDDLEWARE:
 app.use(express.urlencoded({ extended: true })); // Makes working with HTML forms a lot easier. Takes inputs and stores them in req.body (for post) or req.query (for get).
 
 // HOME PAGE:
@@ -135,11 +119,40 @@ app.post("/login", (req, res) => {
     });
 });
 
+// Route to log user in
+app.post("/login", (req, res) => {
+  let username = req.body.username;
+  let password = req.body.password;
+
+  knex
+    .select()
+    .from("users")
+    .where({ username: username, password: password })
+    .first()
+    .then((user) => {
+      if (user) {
+        req.session.user = {
+          id: user.id,
+          username: user.username,
+          level: user.level,
+        };
+        res.redirect("/user_profile");
+      } else {
+        res.render("login", { error_message: "Invalid credentials" });
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+      res.render("login", { error_message: "Login error" });
+    });
+});
+
 // ADD ENTRY PAGE:
 app.get("/add/:table", async (req, res) => {
   const table_name = req.params.table;
   let events = [];
-  if (table_name === "surveys") {
+
+  if (table_name === "survey_results") {
     events = await knex("events")
       .select(
         "event_id",
@@ -150,21 +163,20 @@ app.get("/add/:table", async (req, res) => {
       )
       .orderBy(["event_name", "event_date", "event_start_time"]);
   }
+
   res.render("add", { table_name, events });
 });
 
+// ADD SURVEY (INSERT INTO survey_results)
 app.post("/add/survey", async (req, res) => {
   // NOTE: This is still a simple placeholder; update later to match your add.ejs form and real columns
-  const {
-    event_name,
-    event_id /* UPDATE LATER plus any other survey fields */,
-  } = req.body;
+  const { event_name, event_id /* plus any other survey fields */ } = req.body;
 
   try {
-    await knex("surveys").insert({
-      event_name: event_name, // likely not a real column; adjust when you wire up the form
+    await knex("survey_results").insert({
+      event_name: event_name, // adjust to real column names when wiring form
       event_id: event_id,
-      // UPDATE LATER: other columns...
+      // other survey columns here...
     });
 
     res.redirect("/surveys");
@@ -222,11 +234,6 @@ app.post("/delete-multiple", async (req, res) => {
   }
 });
 
-// USER MAINTENANCE PAGE:
-app.get("/users", (req, res) => {
-  res.render("users");
-});
-
 // PARTICIPANT MAINTENANCE PAGE:
 app.get("/participants", async (req, res) => {
   try {
@@ -258,12 +265,42 @@ app.get("/participants", async (req, res) => {
 
     let query = knex("participants");
 
-    // Case-insensitive search
+    // Case-insensitive search (handles "Full Name")
     if (searchValue && searchColumn) {
       const term = searchValue.trim();
       if (term) {
-        // Postgres ILIKE for case-insensitive search
-        query.whereRaw(`CAST(${searchColumn} AS TEXT) ILIKE ?`, [`%${term}%`]);
+        if (searchColumn === "full_name") {
+          // Split "Jane Doe Smith" into parts
+          const parts = term.split(/\s+/);
+
+          if (parts.length === 1) {
+            // One word: search first OR last name
+            const likeOne = `%${parts[0]}%`;
+            query.where(function () {
+              this.where("participant_first_name", "ilike", likeOne).orWhere(
+                "participant_last_name",
+                "ilike",
+                likeOne
+              );
+            });
+          } else {
+            // Multiple words: use first piece as first name, last piece as last name
+            const firstLike = `%${parts[0]}%`;
+            const lastLike = `%${parts[parts.length - 1]}%`;
+
+            query.where(function () {
+              this.where("participant_first_name", "ilike", firstLike).andWhere(
+                "participant_last_name",
+                "ilike",
+                lastLike
+              );
+            });
+          }
+        } else {
+          // Existing behavior for single column (non full_name searches)
+          const likeTerm = `%${term}%`;
+          query.whereRaw(`CAST(${searchColumn} AS TEXT) ILIKE ?`, [likeTerm]);
+        }
       }
     }
 
@@ -322,12 +359,7 @@ app.get("/participants", async (req, res) => {
       filters,
     });
   } catch (err) {
-    console.error("❌ Error loading participants:", err);
-    console.error("Error details:", {
-      message: err.message,
-      code: err.code,
-      detail: err.detail,
-    });
+    console.error("Error loading participants:", err);
     res.render("participants", {
       participant: [],
       message: "Error loading participants",
@@ -351,7 +383,25 @@ app.get("/events", (req, res) => {
   res.render("events");
 });
 
-// SURVEY MAINTENANCE PAGE (new unified GET route with join + search + filters + sorting)
+// SURVEY MAINTENANCE PAGE (uses survey_results as the DB table)
+// For surveys: map logical column names (from UI) to real DB columns (with table aliases)
+const SURVEY_SEARCHABLE_COLUMNS = [
+  "full_name", // NEW
+  "participant_first_name",
+  "participant_last_name",
+  "event_name",
+  "event_date",
+  "survey_nps_bucket",
+];
+
+const SURVEY_COLUMN_MAP = {
+  full_name: null, // special-cased in code below
+  participant_first_name: "p.participant_first_name",
+  participant_last_name: "p.participant_last_name",
+  event_name: "e.event_name",
+  event_date: "e.event_date",
+  survey_nps_bucket: "s.survey_nps_bucket",
+};
 app.get("/surveys", async (req, res) => {
   try {
     // flash messages
@@ -376,24 +426,30 @@ app.get("/surveys", async (req, res) => {
     } = req.query;
 
     // defaults
-    searchColumn = searchColumn || "participant_first_name";
-    if (!SURVEY_SEARCHABLE_COLUMNS.includes(searchColumn)) {
+    // allow "full_name" as a special case; otherwise enforce SURVEY_SEARCHABLE_COLUMNS
+    if (
+      !searchColumn ||
+      (searchColumn !== "full_name" &&
+        !SURVEY_SEARCHABLE_COLUMNS.includes(searchColumn))
+    ) {
       searchColumn = "participant_first_name";
     }
+
     sortOrder = sortOrder === "desc" ? "desc" : "asc";
 
     // base query with joins
-    let query = knex("surveys as s")
+    // 🔁 if your join table has a different name, update "event_registrations" + its cols
+    let query = knex("survey_results as s")
       .join(
-        "participant_events as pe",
-        "s.participant_event_id",
-        "pe.participant_event_id"
+        "event_registrations as er",
+        "s.event_registration_id",
+        "er.event_registration_id"
       )
-      .join("participants as p", "pe.participant_id", "p.participant_id")
-      .join("events as e", "pe.event_id", "e.event_id")
+      .join("participants as p", "er.participant_id", "p.participant_id")
+      .join("events as e", "er.event_id", "e.event_id")
       .select(
         "s.survey_id",
-        "s.participant_event_id",
+        "s.event_registration_id",
         "p.participant_first_name",
         "p.participant_last_name",
         "e.event_name",
@@ -405,17 +461,47 @@ app.get("/surveys", async (req, res) => {
         "s.survey_overall_score",
         "s.survey_nps_bucket",
         "s.survey_comments",
-        "s.survey_submission_date",
-        "s.survey_submission_time"
+        "s.submission_date as survey_submission_date",
+        "s.submission_time as survey_submission_time"
       );
 
-    // case-insensitive search
+    // case-insensitive search (with full_name support)
     if (searchValue) {
       const term = searchValue.trim();
       if (term) {
-        const dbCol = SURVEY_COLUMN_MAP[searchColumn];
-        if (dbCol) {
-          query.whereRaw(`CAST(${dbCol} AS TEXT) ILIKE ?`, [`%${term}%`]);
+        if (searchColumn === "full_name") {
+          // Handle full name like "Jane", "Doe", or "Jane Doe Smith"
+          const parts = term.split(/\s+/);
+
+          if (parts.length === 1) {
+            // One word -> match either first OR last name
+            const likeOne = `%${parts[0]}%`;
+            query.where(function () {
+              this.where("p.participant_first_name", "ilike", likeOne).orWhere(
+                "p.participant_last_name",
+                "ilike",
+                likeOne
+              );
+            });
+          } else {
+            // Multiple words -> first piece as first name, last piece as last name
+            const firstLike = `%${parts[0]}%`;
+            const lastLike = `%${parts[parts.length - 1]}%`;
+
+            query.where(function () {
+              this.where(
+                "p.participant_first_name",
+                "ilike",
+                firstLike
+              ).andWhere("p.participant_last_name", "ilike", lastLike);
+            });
+          }
+        } else {
+          // Normal single-column search
+          const dbCol = SURVEY_COLUMN_MAP[searchColumn];
+          if (dbCol) {
+            query.whereRaw(`CAST(${dbCol} AS TEXT) ILIKE ?`, [`%${term}%`]);
+          }
         }
       }
     }
@@ -469,7 +555,7 @@ app.get("/surveys", async (req, res) => {
       .distinct("event_name")
       .orderBy("event_name");
 
-    const npsOptionsPromise = knex("surveys")
+    const npsOptionsPromise = knex("survey_results")
       .distinct("survey_nps_bucket")
       .whereNotNull("survey_nps_bucket")
       .orderBy("survey_nps_bucket");
