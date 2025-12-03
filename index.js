@@ -519,6 +519,25 @@
         // });
         
 // DELETE FUNCTIONALITY:
+    // route that occurs when delete button is pressed
+    app.post("/delete/:table/:id", async (req, res) => { 
+        const { table, id } = req.params;
+
+        const primaryKeyByTable = {
+            customers: "customer_id",
+            employees: "employee_id",
+            orders: "order_id"
+        };
+        const primaryKey = primaryKeyByTable[table]; // gather the primary key based on table
+
+        try {
+            await knex(table).where(primaryKey, id).del();
+            res.status(200).json({ success: true });
+        } catch (err) {
+            console.log("Error deleting record:", err.message);
+            res.status(500).json({ error: err.message });
+        }
+    });
         // Map tables to primary key columns
         const deleteConfig = {
         participants: "participant_id",
