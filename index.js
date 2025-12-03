@@ -505,8 +505,14 @@ app.post("/login", (req, res) => {
 });
 
 app.get("/logout", (req, res) => {
-  req.session.destroy();
-  res.redirect("/");
+  req.session.isLoggedIn = false;
+  req.session.user = null;
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Error logging out:", err);
+    }
+    res.redirect("/");
+  });
 });
 
 // PROFILE PAGE: will display user profile information, as well as individualized tables for milestones, donations, event registrations, and survey results
