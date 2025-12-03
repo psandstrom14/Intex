@@ -349,8 +349,8 @@
                                 <input 
                                     type="date" 
                                     class="form-input" 
-                                    name="event_registration_deadline_date" 
-                                    value="<%= info.event_registration_deadline_date ? (info.event_registration_deadline_date.toISOString ? info.event_registration_deadline_date.toISOString().slice(0,10) : info.event_registration_deadline_date.slice(0,10)) : '' %>"
+                                    name="registration_deadline_date" 
+                                    value="<%= info.registration_deadline_date ? (info.registration_deadline_date.toISOString ? info.registration_deadline_date.toISOString().slice(0,10) : info.registration_deadline_date.slice(0,10)) : '' %>"
                                     required>
                             </div>
 
@@ -360,7 +360,7 @@
                                     type="time" 
                                     class="form-input" 
                                     name="event_registration_deadline_time" 
-                                    value="<%= info.event_registration_deadline_time ? info.event_registration_deadline_time.toString().slice(0,5) : '' %>"
+                                    value="<%= info.registration_deadline_time ? info.registration_deadline_time.toString().slice(0,5) : '' %>"
                                     required>
                             </div>
                         </div>
