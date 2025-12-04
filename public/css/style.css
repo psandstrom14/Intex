@@ -2707,3 +2707,177 @@ body {
   background-color: #f0f0f0;
   cursor: pointer;
 }
+/* ============================================ */
+/* COMPREHENSIVE TABLE FIXES */
+/* ============================================ */
+
+/* ========================================
+   FIX 1: MILESTONES TABLE COLUMN WIDTHS
+   ======================================== */
+
+/* Milestones tab - specific column widths */
+#milestones-tab th:nth-child(1),
+#milestones-tab td:nth-child(1) {
+  width: 50px;
+  min-width: 50px;
+  max-width: 50px; /* Checkbox column */
+}
+
+#milestones-tab th:nth-child(2),
+#milestones-tab td:nth-child(2) {
+  width: 50%; /* Title takes 50% of remaining space */
+  min-width: 300px;
+}
+
+#milestones-tab th:nth-child(3),
+#milestones-tab td:nth-child(3) {
+  width: 200px; /* Category */
+  min-width: 150px;
+  text-align: center;
+}
+
+#milestones-tab th:nth-child(4),
+#milestones-tab td:nth-child(4) {
+  width: 150px; /* Date */
+  min-width: 120px;
+  text-align: left;
+}
+
+/* ========================================
+   FIX 2: EVENT REGISTRATIONS - PREVENT OVERLAP
+   ======================================== */
+
+/* Remove conflicting table-layout and set proper widths */
+#events-tab .table-container table {
+  table-layout: fixed; /* CRITICAL: Forces columns to respect widths */
+  width: 100%;
+  min-width: 1500px; /* Ensures horizontal scroll on smaller screens */
+}
+
+/* Event Registrations - Specific column widths */
+#events-tab th:nth-child(1),
+#events-tab td:nth-child(1) {
+  width: 250px; /* Event Name - needs more space */
+  min-width: 250px;
+  padding-right: 1.5rem;
+}
+
+#events-tab th:nth-child(2),
+#events-tab td:nth-child(2) {
+  width: 120px; /* Event Date */
+  min-width: 120px;
+}
+
+#events-tab th:nth-child(3),
+#events-tab td:nth-child(3) {
+  width: 100px; /* Start Time */
+  min-width: 100px;
+}
+
+#events-tab th:nth-child(4),
+#events-tab td:nth-child(4) {
+  width: 100px; /* End Time */
+  min-width: 100px;
+}
+
+#events-tab th:nth-child(5),
+#events-tab td:nth-child(5) {
+  width: 180px; /* Location */
+  min-width: 180px;
+}
+
+#events-tab th:nth-child(6),
+#events-tab td:nth-child(6) {
+  width: 110px; /* Status */
+  min-width: 110px;
+  text-align: center;
+}
+
+#events-tab th:nth-child(7),
+#events-tab td:nth-child(7) {
+  width: 100px; /* Attended */
+  min-width: 100px;
+  text-align: center;
+}
+
+#events-tab th:nth-child(8),
+#events-tab td:nth-child(8) {
+  width: 130px; /* Registered On */
+  min-width: 130px;
+}
+
+#events-tab th:nth-child(9),
+#events-tab td:nth-child(9) {
+  width: 130px; /* Check-In */
+  min-width: 130px;
+}
+
+/* ========================================
+   FIX 3: GENERAL TABLE IMPROVEMENTS
+   ======================================== */
+
+/* Ensure proper text wrapping in all cells */
+td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Better padding for readability */
+#events-tab td,
+#events-tab th {
+  padding: 1rem 0.8rem;
+}
+
+#milestones-tab td,
+#milestones-tab th {
+  padding: 1rem 1rem;
+}
+
+/* ========================================
+   FIX 4: RESPONSIVE SCROLL INDICATORS
+   ======================================== */
+
+/* Make sure tables can scroll horizontally */
+.table-container > div:last-child {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+}
+
+/* Add visual scroll hint */
+@media (max-width: 1600px) {
+  #events-tab .table-container > div:last-child::after {
+    content: "← Scroll for more columns →";
+    position: sticky;
+    right: 0;
+    bottom: 10px;
+    background: var(--powder-blue);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    display: inline-block;
+    margin-left: auto;
+    float: right;
+    opacity: 0.8;
+    pointer-events: none;
+  }
+}
+
+/* ========================================
+   FIX 5: FORCE LEFT ALIGNMENT FOR HEADERS
+   ======================================== */
+
+/* Override any center alignment */
+th {
+  text-align: left !important;
+}
+
+/* Except for columns that should be centered */
+#events-tab th:nth-child(6),  /* Status */
+#events-tab th:nth-child(7),  /* Attended */
+#milestones-tab th:nth-child(3) { /* Category */
+  text-align: center !important;
+}

@@ -1,4 +1,5 @@
-// Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom
+// index.js
+// // Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom
 // This code will allow users of a non profit to manage visitor information, user information, events, milestones, and donations
 
 // REQUIRE LIBRARIES AND STORE IN VARIABLE (if applicable):
@@ -63,20 +64,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// // Content Security Policy middleware - allows localhost connections for development
-// app.use((req, res, next) => {
-//     res.setHeader(
-//     'Content-Security-Policy',
-//     "default-src 'self' http://localhost:* ws://localhost:* wss://localhost:*; " +
-//     "connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:*; " +
-//     "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
-//     "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
-//     "img-src 'self' data: https:; " +
-//     "font-src 'self' https://cdn.jsdelivr.net;"
-//     );
-//     next();
-// });
-
 // Global authentication middleware - runs on EVERY request (Needed for login functionality)
 app.use((req, res, next) => {
     // Skip authentication for specific login routes
@@ -86,7 +73,6 @@ app.use((req, res, next) => {
         req.path === "/about" ||
         req.path === "/performance" ||
         req.path === "/calendar" ||
-        req.path === "/donate_now" ||
         req.path === "/login" ||
         req.path === "/logout" ||
         req.path === "/signup"
@@ -156,12 +142,12 @@ app.get("/logout", (req, res) => {
     });
 });
 
-// SIGN UP PAGE: 
+// SIGN UP PAGE:
 app.get("/signup", (req, res) => {
     res.render("signup");
 });
 // SIGNUP + AUTO-LOGIN
-app.post('/signup', async (req, res) => {
+app.post("/signup", async (req, res) => {
     try {
         const newData = req.body;
 
@@ -174,7 +160,7 @@ app.post('/signup', async (req, res) => {
         req.session.user = {
             id: user.participant_id,
             username: user.participant_username,
-            role: user.participant_role,   // make sure this column exists
+            role: user.participant_role, // make sure this column exists
         };
         req.session.isLoggedIn = true;
 
@@ -185,7 +171,6 @@ app.post('/signup', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-
 
 // LANGUAGE BOXES:
 app.post("/set-language", (req, res) => {
@@ -599,6 +584,40 @@ app.post("/cancel-registration/:eventId", async (req, res) => {
 app.get("/donate_now", (req, res) => {
     res.render("donate_now");
 });
+// Handle donation submission
+app.post("/add/donations", async (req, res) => {
+    const newData = req.body;
+
+    console.log("Donation submission received:", newData); // Debug log
+
+    try {
+        // Validate required fields
+        if (!newData.participant_id || !newData.donation_date || !newData.donation_amount) {
+            return res.json({ 
+                success: false, 
+                error: "Missing required fields" 
+            });
+        }
+
+        // Insert into database
+        await knex("donations").insert(newData);
+        
+        console.log("Donation successfully inserted"); // Debug log
+        
+        // Return success response
+        res.json({ 
+            success: true, 
+            participant_id: newData.participant_id 
+        });
+    } catch (err) {
+        console.error("Error adding donation:", err); // Debug log
+        res.json({ 
+            success: false, 
+            error: err.message 
+        });
+    }
+});
+
 
 // PROFILE PAGE: will display user profile information, as well as individualized tables for milestones, donations, event registrations, and survey results
 // Route to display profile page (takes input id, which can be the users id or the id from the participants table)
@@ -654,8 +673,9 @@ app.get("/profile/:id", async (req, res) => {
             )
             .orderBy("milestone_date", "desc");
 
-        // Get donations sorted by most recent first
+        // Get donations sorted by most recent first (only for this participant)
         const donations = await knex("donations")
+            .where("participant_id", participantId)
             .select("donation_id", "donation_date", "donation_amount")
             .orderBy("donation_date", "desc");
 
@@ -664,32 +684,39 @@ app.get("/profile/:id", async (req, res) => {
             donation.donation_amount = parseFloat(donation.donation_amount) || 0;
         });
 
-        // Get event registrations sorted by most recent first
-        const eventRegistrations = await knex("event_registrations")
-            .where("participant_id", participantId)
+        // Get event registrations with event details sorted by most recent first
+        const eventRegistrations = await knex("event_registrations as er")
+            .join("events as e", "er.event_id", "e.event_id")
+            .where("er.participant_id", participantId)
             .select(
-                "event_registration_id",
-                "participant_id",
-                "event_id",
-                "registration_status",
-                "registration_attended_flag",
-                "registration_created_at_date",
-                "registration_created_at_time",
-                "registration_check_in_date",
-                "registration_check_in_time"
+                "er.event_registration_id",
+                "er.participant_id",
+                "er.event_id",
+                "er.registration_status",
+                "er.registration_attended_flag",
+                "er.registration_created_at_date",
+                "er.registration_created_at_time",
+                "er.registration_check_in_date",
+                "er.registration_check_in_time",
+                "e.event_name",
+                "e.event_date",
+                "e.event_start_time",
+                "e.event_end_time",
+                "e.event_location"
             )
             .orderBy([
-                { column: "registration_created_at_date", order: "desc" },
-                { column: "registration_created_at_time", order: "desc" },
+                { column: "er.registration_created_at_date", order: "desc" },
+                { column: "er.registration_created_at_time", order: "desc" },
             ]);
 
-        // Get survey results through event_registrations join
+        // Get survey results through event_registrations join with event details
         const surveys = await knex("survey_results as sr")
             .innerJoin(
                 "event_registrations as er",
                 "sr.event_registration_id",
                 "er.event_registration_id"
             )
+            .innerJoin("events as e", "er.event_id", "e.event_id")
             .where("er.participant_id", participantId)
             .select(
                 "sr.survey_id",
@@ -702,7 +729,9 @@ app.get("/profile/:id", async (req, res) => {
                 "sr.survey_nps_bucket",
                 "sr.survey_comments",
                 "sr.submission_date",
-                "sr.submission_time"
+                "sr.submission_time",
+                "e.event_name",
+                "e.event_date"
             )
             .orderBy([
                 { column: "sr.submission_date", order: "desc" },
@@ -737,44 +766,217 @@ app.get("/profile/:id", async (req, res) => {
     }
 });
 
+// PROFILE EDIT ROUTE (called from profile page)
+app.get("/profile-edit/:table/:id", async (req, res) => {
+    const table_name = req.params.table;
+    const id = req.params.id;
+
+    const primaryKeyByTable = {
+        participants: "participant_id",
+        milestones: "milestone_id",
+        events: "event_id",
+        survey_results: "survey_id",
+        donations: "donation_id",
+        event_registrations: "event_registration_id",
+    };
+
+    const primaryKey = primaryKeyByTable[table_name];
+
+    try {
+        let info;
+
+        // Special handling for survey_results - need to join to get event info
+        if (table_name === "survey_results") {
+            info = await knex("survey_results as s")
+                .join(
+                    "event_registrations as er",
+                    "s.event_registration_id",
+                    "er.event_registration_id"
+                )
+                .join("events as e", "er.event_id", "e.event_id")
+                .join("participants as p", "er.participant_id", "p.participant_id")
+                .where("s.survey_id", id)
+                .select(
+                    "s.*",
+                    "e.event_id",
+                    "e.event_name",
+                    "e.event_date",
+                    "p.participant_id"
+                )
+                .first();
+        } else {
+            info = await knex(table_name).where(primaryKey, id).first();
+        }
+
+        let events = [];
+        let event_types = [];
+
+        if (table_name === "events") {
+            event_types = await knex("event_types")
+                .select("event_type_id", "event_type_name")
+                .orderBy("event_type_name");
+        }
+
+        if (
+            table_name === "event_registrations" ||
+            table_name === "survey_results" ||
+            table_name === "events"
+        ) {
+            events = await knex("events")
+                .select(
+                    "event_id",
+                    "event_name",
+                    "event_date",
+                    "event_start_time",
+                    "event_end_time"
+                )
+                .orderBy(["event_name", "event_date", "event_start_time"]);
+        }
+
+        res.render("edit", { 
+            table_name, 
+            info, 
+            id, 
+            events, 
+            event_types,
+            fromProfile: true  // Flag to indicate this edit came from profile
+        });
+    } catch (err) {
+        console.error("Error fetching entry:", err.message);
+        // Redirect back to profile with error
+        req.session.flashMessage = "Error loading edit page: " + err.message;
+        req.session.flashType = "danger";
+        res.redirect(`/profile/${req.session.user.id}?tab=profile`);
+    }
+});
+
+// PROFILE UPDATE ROUTE (called from edit page when editing from profile)
+app.post("/profile-edit/:table/:id", async (req, res) => {
+    const table_name = req.params.table;
+    const id = req.params.id;
+    const updatedData = req.body;
+
+    const primaryKeyByTable = {
+        users: "participant_id",
+        milestones: "milestone_id",
+        events: "event_id",
+        survey_results: "survey_id",
+        donations: "donation_id",
+        event_registrations: "event_registration_id",
+    };
+
+    const primaryKey = primaryKeyByTable[table_name];
+
+    try {
+        await knex(table_name).where(primaryKey, id).update(updatedData);
+
+        req.session.flashMessage = "Updated Successfully!";
+        req.session.flashType = "success";
+
+        // Always redirect back to profile with appropriate tab
+        const tabMap = {
+            participants: "profile",
+            milestones: "milestones",
+            donations: "donations",
+            event_registrations: "events",
+            survey_results: "surveys"
+        };
+
+        const tab = tabMap[table_name] || "profile";
+        res.redirect(`/profile/${req.session.user.id}?tab=${tab}`);
+    } catch (err) {
+        console.log("Error updating record:", err.message);
+        req.session.flashMessage = "Error updating record: " + err.message;
+        req.session.flashType = "danger";
+
+        res.redirect(`/profile/${req.session.user.id}?tab=profile`);
+    }
+});
+
+// PROFILE DELETE ROUTE (called from profile page)
+app.post("/profile-delete/:table/:id", async (req, res) => {
+    const { table, id } = req.params;
+
+    const primaryKeyByTable = {
+        users: "participant_id",
+        milestones: "milestone_id",
+        events: "event_id",
+        survey_results: "survey_id",
+        donations: "donation_id",
+        event_registrations: "event_registration_id",
+    };
+
+    const primaryKey = primaryKeyByTable[table];
+
+    try {
+        // Special handling for deleting the user's own account (participants table)
+        if (table === "users" && parseInt(id) === req.session.user.id) {
+            // Delete the participant
+            await knex(table).where(primaryKey, id).del();
+            
+            // Log them out
+            req.session.isLoggedIn = false;
+            req.session.user = null;
+            
+            // Destroy session and redirect to home
+            req.session.destroy((err) => {
+                if (err) {
+                    console.error("Error logging out after account deletion:", err);
+                }
+                res.status(200).json({ 
+                    success: true,
+                    redirect: "/"
+                });
+            });
+        } else {
+            // Normal delete for other records
+            await knex(table).where(primaryKey, id).del();
+            res.status(200).json({ success: true });
+        }
+    } catch (err) {
+        console.log("Error deleting record:", err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 /* DASHBOARD PAGES */
 // USERS MAINTENANCE PAGE:
 app.get("/users", async (req, res) => {
-  try {
-    // flash messages + query messages
-    const sessionData = req.session || {};
-    let message = sessionData.flashMessage || "";
-    let messageType = sessionData.flashType || "success";
+    try {
+        // flash messages + query messages
+        const sessionData = req.session || {};
+        let message = sessionData.flashMessage || "";
+        let messageType = sessionData.flashType || "success";
 
-    sessionData.flashMessage = null;
-    sessionData.flashType = null;
+        sessionData.flashMessage = null;
+        sessionData.flashType = null;
 
-    // fallback to query params (for deletes)
-    if (!message && req.query.message) {
-      message = req.query.message;
-      messageType = req.query.messageType || "success";
-    }
+        // fallback to query params (for deletes)
+        if (!message && req.query.message) {
+            message = req.query.message;
+            messageType = req.query.messageType || "success";
+        }
 
-    // --- filtering/sorting code ---
-    let {
-      searchColumn,
-      searchValue,
-      city,
-      school,
-      interest,
-      donations,
-      sortColumn,
-      sortOrder,
-    } = req.query;
+        // --- filtering/sorting code ---
+        let {
+            searchColumn,
+            searchValue,
+            city,
+            school,
+            interest,
+            donations,
+            sortColumn,
+            sortOrder,
+        } = req.query;
 
-    // defaults
-    searchColumn = searchColumn || "full_name";
-    sortOrder = sortOrder === "desc" ? "desc" : "asc";
+        // defaults
+        searchColumn = searchColumn || "full_name";
+        sortOrder = sortOrder === "desc" ? "desc" : "asc";
 
     let query = knex("users");
 
-    // Filter by role - only show participants
-    query.where("participant_role", "participant");
+        // Filter by role - only show participants
+        query.where("participant_role", "participant");
 
     // Case-insensitive search
     if (searchValue && searchColumn) {
@@ -811,84 +1013,84 @@ app.get("/users", async (req, res) => {
       }
     }
 
-    // City filter
-    const cityArr = paramToArray(city);
-    if (!cityArr.includes("all")) {
-      query.whereIn("participant_city", cityArr);
-    }
+        // City filter
+        const cityArr = paramToArray(city);
+        if (!cityArr.includes("all")) {
+            query.whereIn("participant_city", cityArr);
+        }
 
-    // School filter
-    const schoolArr = paramToArray(school);
-    if (!schoolArr.includes("all")) {
-      query.whereIn("participant_school_or_employer", schoolArr);
-    }
+        // School filter
+        const schoolArr = paramToArray(school);
+        if (!schoolArr.includes("all")) {
+            query.whereIn("participant_school_or_employer", schoolArr);
+        }
 
-    // Interest filter
-    const interestArr = paramToArray(interest);
-    if (!interestArr.includes("all")) {
-      query.whereIn("participant_field_of_interest", interestArr);
-    }
+        // Interest filter
+        const interestArr = paramToArray(interest);
+        if (!interestArr.includes("all")) {
+            query.whereIn("participant_field_of_interest", interestArr);
+        }
 
-    // Donations filter
-    const donationsArr = paramToArray(donations);
-    if (!donationsArr.includes("all")) {
-      if (donationsArr.includes("Yes") && !donationsArr.includes("No")) {
-        query.where("total_donations", ">", 0);
-      } else if (donationsArr.includes("No") && !donationsArr.includes("Yes")) {
-        query.where((qb) => {
-          qb.where("total_donations", 0).orWhereNull("total_donations");
+        // Donations filter
+        const donationsArr = paramToArray(donations);
+        if (!donationsArr.includes("all")) {
+            if (donationsArr.includes("Yes") && !donationsArr.includes("No")) {
+                query.where("total_donations", ">", 0);
+            } else if (donationsArr.includes("No") && !donationsArr.includes("Yes")) {
+                query.where((qb) => {
+                    qb.where("total_donations", 0).orWhereNull("total_donations");
+                });
+            }
+        }
+
+        // Sorting
+        if (sortColumn) {
+            query.orderBy(sortColumn, sortOrder);
+        }
+
+        const results = await query;
+
+        const filters = {
+            searchColumn,
+            searchValue: searchValue || "",
+            city: cityArr,
+            school: schoolArr,
+            interest: interestArr,
+            donations: donationsArr,
+            sortColumn: sortColumn || "",
+            sortOrder,
+        };
+
+        res.render("users", {
+            participant: results,
+            message,
+            messageType,
+            filters,
+            isLoggedIn: req.session.isLoggedIn || false,
+            userId: req.session.user?.id || null,
+            role: req.session.user?.role || null,
         });
-      }
+    } catch (err) {
+        console.error("Error loading users:", err);
+        res.render("users", {
+            participant: [],
+            message: "Error loading users",
+            messageType: "danger",
+            filters: {
+                searchColumn: "participant_first_name",
+                searchValue: "",
+                city: ["all"],
+                school: ["all"],
+                interest: ["all"],
+                donations: ["all"],
+                sortColumn: "",
+                sortOrder: "asc",
+            },
+            isLoggedIn: req.session.isLoggedIn || false,
+            userId: req.session.user?.id || null,
+            role: req.session.user?.role || null,
+        });
     }
-
-    // Sorting
-    if (sortColumn) {
-      query.orderBy(sortColumn, sortOrder);
-    }
-
-    const results = await query;
-
-    const filters = {
-      searchColumn,
-      searchValue: searchValue || "",
-      city: cityArr,
-      school: schoolArr,
-      interest: interestArr,
-      donations: donationsArr,
-      sortColumn: sortColumn || "",
-      sortOrder,
-    };
-
-    res.render("users", {
-      participant: results,
-      message,
-      messageType,
-      filters,
-      isLoggedIn: req.session.isLoggedIn || false,
-      userId: req.session.user?.id || null,
-      role: req.session.user?.role || null,
-    });
-  } catch (err) {
-    console.error("Error loading users:", err);
-    res.render("users", {
-      participant: [],
-      message: "Error loading users",
-      messageType: "danger",
-      filters: {
-        searchColumn: "participant_first_name",
-        searchValue: "",
-        city: ["all"],
-        school: ["all"],
-        interest: ["all"],
-        donations: ["all"],
-        sortColumn: "",
-        sortOrder: "asc",
-      },
-      isLoggedIn: req.session.isLoggedIn || false,
-      userId: req.session.user?.id || null,
-      role: req.session.user?.role || null,
-    });
-  }
 });
 
 // PARTICIPANT MAINTENANCE PAGE:
@@ -909,65 +1111,6 @@ app.get("/participants", async (req, res) => {
       messageType = req.query.messageType || "success";
     }
 
-    // --- filtering/sorting code ---
-    let {
-      searchColumn,
-      searchValue,
-      city,
-      school,
-      interest,
-      donations,
-      sortColumn,
-      sortOrder,
-    } = req.query;
-
-    // defaults
-    searchColumn = searchColumn || "full_name";
-    sortOrder = sortOrder === "desc" ? "desc" : "asc";
-
-    let query = knex("users");
-    
-    // Filter by role - only show participants
-    query.where("participant_role", "participant");
-
-    // Case-insensitive search
-    if (searchValue && searchColumn) {
-      const term = searchValue.trim();
-      if (term) {
-        if (searchColumn === "full_name") {
-          // for full name, do this:
-          // Split "Jane Doe Smith" into parts
-          const parts = term.split(/\s+/);
-
-          if (parts.length === 1) {
-            // One word: search first OR last name
-            const likeOne = `%${parts[0]}%`;
-            query.where(function () {
-              this.where("participant_first_name", "ilike", likeOne).orWhere(
-                "participant_last_name",
-                "ilike",
-                likeOne
-              );
-            });
-          } else {
-            // Multiple words: use first piece as first name, last piece as last name
-            const firstLike = `%${parts[0]}%`;
-            const lastLike = `%${parts[parts.length - 1]}%`;
-
-            query.where(function () {
-              this.where("participant_first_name", "ilike", firstLike).andWhere(
-                "participant_last_name",
-                "ilike",
-                lastLike
-              );
-            });
-          }
-        } else {
-          // Existing behavior for single column (non full_name searches)
-          const likeTerm = `%${term}%`;
-          query.whereRaw(`CAST(${searchColumn} AS TEXT) ILIKE ?`, [likeTerm]);
-        }
-
         // --- filtering/sorting code ---
         let {
             searchColumn,
@@ -984,7 +1127,10 @@ app.get("/participants", async (req, res) => {
         searchColumn = searchColumn || "full_name";
         sortOrder = sortOrder === "desc" ? "desc" : "asc";
 
-        let query = knex("participants");
+    let query = knex("users");
+    
+    // Filter by role - only show participants
+    query.where("participant_role", "participant");
 
         // Case-insensitive search
         if (searchValue && searchColumn) {
@@ -1099,6 +1245,7 @@ app.get("/participants", async (req, res) => {
         });
     }
 });
+
 
 // EVENT MAINTENANCE PAGE:
 // EVENT MAINTENANCE PAGE:
