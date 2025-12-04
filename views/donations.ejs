@@ -1,7 +1,6 @@
 <!--Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom-->
-<!--This page will dispaly volunteers, and allow CRUD (for managers) + Search Capabilities.-->
+<!--This page will display donations, and allow CRUD (for managers) + Search/Filter/Sort capabilities.-->
 <!--This page will only be visible to users who are logged in.-->
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -59,12 +58,207 @@
     </nav>
 
     <!-- Hero Section -->
-    <main id="main-content">
     <section class="hero">
         <div class="hero-content">
-            <h1>Donations Page</h1>
+            <h1>Donations</h1>
+            <p>Manage and view all donation information</p>
         </div>
     </section>
+
+    <!-- Database Content -->
+    <main id="main-content" class="container">
+        <!-- Success/Error Messages -->
+        <% if (typeof message !== 'undefined' && message) { %>
+            <div class="alert alert-<%= messageType || 'success' %>">
+                <%= message %>
+            </div>
+        <% } %>
+
+        <div class="table-container">
+            <!-- Header -->
+            <div class="table-header">
+                <h2 class="table-title">Ella Rises Donations</h2>
+                <div class="table-actions">
+                    <% if (isLoggedIn && role && role.toLowerCase() === 'admin') { %>
+                        <button class="btn btn-add">
+                            <a href="/add/donations">+ Add Donation</a>
+                        </button>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Search + Filters-->
+            <div class="filter-section">
+                <form id="donationsForm" method="GET" action="/donations">
+                    <div class="filter-row">
+                        <!-- Search Dropdown -->
+                        <div class="filter-item filter-column">
+                            <select name="searchColumn" id="searchColumn" class="form-control">
+                                <option value="full_name"<% if (!filters.searchColumn || filters.searchColumn === 'full_name') { %> selected<% } %>>Participant Full Name</option>
+                                <option value="participant_first_name"<% if (filters.searchColumn === 'participant_first_name') { %> selected<% } %>>First Name</option>
+                                <option value="participant_last_name"<% if (filters.searchColumn === 'participant_last_name') { %> selected<% } %>>Last Name</option>
+                                <option value="donation_date"<% if (filters.searchColumn === 'donation_date') { %> selected<% } %>>Donation Date</option>
+                                <option value="donation_amount"<% if (filters.searchColumn === 'donation_amount') { %> selected<% } %>>Donation Amount</option>
+                            </select>                            
+                        </div>
+
+                        <!-- Search Input + Buttons -->
+                        <div class="filter-item filter-search">
+                            <div class="search-input-group">
+                                <input
+                                    type="text"
+                                    name="searchValue"
+                                    id="searchValue"
+                                    class="form-control"
+                                    placeholder="Search..."
+                                    value="<%= filters.searchValue || '' %>"
+                                >
+                                <button type="submit" class="btn btn-primary">Search</button>
+                                <button type="button" class="btn btn-secondary filter-toggle-btn" id="toggleFilters">
+                                    <span id="filterButtonText">Filters</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Filters -->
+                    <div id="filterSection" class="advanced-filter-section is-hidden">
+                        <h3 class="filter-options-title">Filter Options</h3>
+                        <div class="filter-cards-grid">
+                            <!-- Donation Months Filter -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4 class="filter-card-title">Donation Months</h4>
+                                </div>
+                                <div class="card-body filter-card-scroll">
+                                    <%
+                                        const monthFilters = filters.months || ['all'];
+                                        const isMonthAll = monthFilters.includes('all');
+                                        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                                    %>
+                                    <label class="filter-checkbox-label">
+                                        <input type="checkbox" name="months" value="all" class="month-checkbox" <%= isMonthAll ? 'checked' : '' %>> All
+                                    </label>
+                                    <% monthNames.forEach((monthName, index) => { %>
+                                        <label class="filter-checkbox-label">
+                                            <input type="checkbox" name="months" value="<%= index + 1 %>" class="month-checkbox" <%= monthFilters.includes(String(index + 1)) ? 'checked' : '' %>> <%= monthName %>
+                                        </label>
+                                    <% }); %>
+                                </div>
+                            </div>
+
+                            <!-- Donation Years Filter -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4 class="filter-card-title">Donation Years</h4>
+                                </div>
+                                <div class="card-body filter-card-scroll">
+                                    <%
+                                        const yearFilters = filters.years || ['all'];
+                                        const isYearAll = yearFilters.includes('all');
+                                        const availableYears = filters.availableYears || [];
+                                    %>
+                                    <label class="filter-checkbox-label">
+                                        <input type="checkbox" name="years" value="all" class="year-checkbox" <%= isYearAll ? 'checked' : '' %>> All
+                                    </label>
+                                    <% availableYears.forEach(year => { %>
+                                        <label class="filter-checkbox-label">
+                                            <input type="checkbox" name="years" value="<%= year %>" class="year-checkbox" <%= yearFilters.includes(String(year)) ? 'checked' : '' %>> <%= year %>
+                                        </label>
+                                    <% }); %>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filter Action Buttons -->
+                        <div class="filter-row filter-actions">
+                            <div class="filter-item filter-actions-item">
+                                <button type="submit" class="btn btn-primary btn-small btn-block">
+                                    Apply Filters
+                                </button>
+                            </div>
+                            <div class="filter-item filter-actions-item">
+                                <button type="button" class="btn btn-outline btn-small btn-block" id="clearFilters">
+                                    Clear Filters
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden inputs for sort (used by header clicks) -->
+                    <input type="hidden" name="sortColumn" id="sortColumn" value="<%= filters.sortColumn || '' %>">
+                    <input type="hidden" name="sortOrder" id="sortOrder" value="<%= filters.sortOrder || 'asc' %>">
+                </form>
+            </div>
+            
+            <!-- Bulk Actions Bar -->
+            <% if (isLoggedIn && role && role.toLowerCase() === 'admin') { %>
+                <div id="bulkActionsBar" style="display: none; background-color: #f8f0f0; padding: 1rem 1.5rem; border-bottom: 1px solid #e0e0e0;">
+                    <div class="flex-between">
+                        <div>
+                            <span id="selectedCount" style="font-weight: 600; color: #666;">0 selected</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="btn btn-secondary btn-small" id="viewSelected" style="display: none;"> View Donation </button>
+                            <button class="btn btn-secondary btn-small" id="editSelected" style="display: none;"> Edit </button>
+                            <button class="btn btn-danger btn-small" id="deleteSelected"> Delete Selected </button>
+                            <button class="btn btn-outline btn-small" id="clearSelection"> Clear Selection</button>
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+
+            <!-- Table -->
+            <div>
+                <table style="border-spacing: 0;">
+                    <thead>
+                        <tr>
+                            <% if (isLoggedIn && role && role.toLowerCase() === 'admin') { %>
+                            <th style="width: 40px; min-width: 40px;"><input type="checkbox" id="selectAll" aria-label="Select all donations"></th>
+                            <% } %>
+                            <th class="sortable" data-column="participant_first_name" style="min-width: 120px; width: auto; white-space: normal; padding: 0.8rem 0.6rem;">First Name <span class="sort-icon">⇅</span></th>
+                            <th class="sortable" data-column="participant_last_name" style="min-width: 120px; width: auto; white-space: normal; padding: 0.8rem 0.6rem;">Last Name <span class="sort-icon">⇅</span></th>
+                            <th class="sortable" data-column="donation_date" style="min-width: 120px; width: auto; white-space: normal; padding: 0.8rem 0.6rem;">Donation Date <span class="sort-icon">⇅</span></th>
+                            <th class="sortable" data-column="donation_amount" style="min-width: 120px; width: auto; white-space: normal; padding: 0.8rem 0.6rem;">Donation Amount <span class="sort-icon">⇅</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (donations && donations.length > 0) { %>
+                            <% donations.forEach(function(d) { %>
+                                <% 
+                                    let formattedDonationDate = '';
+                                    if (d.donation_date) {
+                                        const date = new Date(d.donation_date);
+                                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                                        const day = String(date.getDate()).padStart(2, '0');
+                                        const year = date.getFullYear();
+                                        formattedDonationDate = `${month}/${day}/${year}`;
+                                    }
+                                    
+                                    const donationAmount = parseFloat(d.donation_amount) || 0;
+                                    const formattedAmount = donationAmount.toFixed(2);
+                                %>
+                                <tr>
+                                    <% if (isLoggedIn && role && role.toLowerCase() === 'admin') { %>
+                                    <td style="max-width: 40px;"><input type="checkbox" class="row-checkbox" value="<%= d.donation_id %>" data-name="<%= d.participant_first_name %> <%= d.participant_last_name %> - $<%= formattedAmount %>" aria-label="Select donation for <%= d.participant_first_name %> <%= d.participant_last_name %> - $<%= formattedAmount %>"></td>
+                                    <% } %>
+                                    <td style="max-width: none; min-width: 120px; padding: 0.8rem 0.6rem;"><a href="/profile/<%= d.participant_id %>" style="color: var(--primary); text-decoration: underline; font-weight: 600;"><%= d.participant_first_name %></a></td>
+                                    <td style="max-width: none; min-width: 120px; padding: 0.8rem 0.6rem;"><a href="/profile/<%= d.participant_id %>" style="color: var(--primary); text-decoration: underline; font-weight: 600;"><%= d.participant_last_name %></a></td>
+                                    <td style="max-width: none; min-width: 120px; padding: 0.8rem 0.6rem;"><%= formattedDonationDate || 'N/A' %></td>
+                                    <td style="max-width: none; min-width: 120px; padding: 0.8rem 0.6rem;">$<%= formattedAmount %></td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="<%= (isLoggedIn && role && role.toLowerCase() === 'admin') ? '5' : '4' %>" style="text-align: center; padding: 3rem; color: #999;">
+                                    No donations found. Click "Add Donation" to get started.
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </main>
 
     <!-- Footer -->
@@ -74,7 +268,7 @@
     </footer>
 
     <script>
-        // Allow Dropdown to handle delay to increase usability
+        // NAV DROPDOWN
         let dropdownTimeout;
         const dropdown = document.querySelector('.dropdown');
         const dropdownMenu = document.querySelector('.dropdown-menu');
@@ -88,7 +282,7 @@
             dropdown.addEventListener('mouseleave', function() {
                 dropdownTimeout = setTimeout(function() {
                     dropdownMenu.style.display = 'none';
-                }, 200); // 200ms delay before closing
+                }, 200);
             });
 
             dropdownMenu.addEventListener('mouseenter', function() {
@@ -102,6 +296,302 @@
                 }, 200);
             });
         }
+
+        // When switching to a different database page, clear donations filter visibility state
+        const pageLinks = document.querySelectorAll('.dropdown-menu a');
+        pageLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                sessionStorage.removeItem('filtersVisible_donations');
+            });
+        });
+
+        const form = document.getElementById('donationsForm');
+
+        // FILTER TOGGLE (per-page key)
+        document.getElementById('toggleFilters').addEventListener('click', function() {
+            const filterSection = document.getElementById('filterSection');
+            const buttonText = document.getElementById('filterButtonText');
+            if (filterSection.style.display === 'none' || filterSection.style.display === '') {
+                filterSection.style.display = 'block';
+                buttonText.textContent = 'Hide Filters';
+                sessionStorage.setItem('filtersVisible_donations', 'true');
+            } else {
+                filterSection.style.display = 'none';
+                buttonText.textContent = 'Filters';
+                sessionStorage.setItem('filtersVisible_donations', 'false');
+            }
+        });
+
+        // On load: restore filter visibility if user had it open
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterSection = document.getElementById('filterSection');
+            const buttonText = document.getElementById('filterButtonText');
+            const filtersVisible = sessionStorage.getItem('filtersVisible_donations');
+
+            const hasActiveFilters = "<%= ((filters.months && !filters.months.includes('all')) || (filters.years && !filters.years.includes('all'))) ? 'true' : 'false' %>";
+
+            if (filtersVisible === 'true' || (filtersVisible === null && hasActiveFilters === 'true')) {
+                filterSection.style.display = 'block';
+                buttonText.textContent = 'Hide Filters';
+            }
+        });
+
+        // SORTING
+        let currentSortColumn = "<%= filters.sortColumn || '' %>";
+        let currentSortOrder = "<%= filters.sortOrder || 'asc' %>";
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (currentSortColumn) {
+                updateSortIcons(currentSortColumn, currentSortOrder);
+            }
+        });
+
+        function updateSortIcons(column, order) {
+            document.querySelectorAll('.sort-icon').forEach(icon => {
+                icon.textContent = '⇅';
+                icon.classList.remove('sort-active');
+            });
+            const activeHeader = document.querySelector(`th[data-column="${column}"]`);
+            if (activeHeader) {
+                const icon = activeHeader.querySelector('.sort-icon');
+                icon.classList.add('sort-active');
+                icon.textContent = order === 'asc' ? '↑' : '↓';
+            }
+        }
+
+        document.querySelectorAll('.sortable').forEach(header => {
+            header.addEventListener('click', function() {
+                const column = this.getAttribute('data-column');
+                let order = 'asc';
+                if (column === currentSortColumn) {
+                    order = currentSortOrder === 'asc' ? 'desc' : 'asc';
+                }
+                document.getElementById('sortColumn').value = column;
+                document.getElementById('sortOrder').value = order;
+                form.submit();
+            });
+        });
+
+        // Filter checkbox handling - Months
+        const monthCheckboxes = document.querySelectorAll('.month-checkbox');
+        const monthAllCheckbox = document.querySelector('.month-checkbox[value="all"]');
+        monthCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                if (this.value === 'all' && this.checked) {
+                    monthCheckboxes.forEach(cb => { if (cb.value !== 'all') cb.checked = false; });
+                } else if (this.value !== 'all' && this.checked) {
+                    monthAllCheckbox.checked = false;
+                } else if (this.value !== 'all' && !this.checked) {
+                    const anyChecked = Array.from(monthCheckboxes).some(cb => cb.value !== 'all' && cb.checked);
+                    if (!anyChecked) monthAllCheckbox.checked = true;
+                }
+            });
+        });
+
+        // Years
+        const yearCheckboxes = document.querySelectorAll('.year-checkbox');
+        const yearAllCheckbox = document.querySelector('.year-checkbox[value="all"]');
+        yearCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                if (this.value === 'all' && this.checked) {
+                    yearCheckboxes.forEach(cb => { if (cb.value !== 'all') cb.checked = false; });
+                } else if (this.value !== 'all' && this.checked) {
+                    yearAllCheckbox.checked = false;
+                } else if (this.value !== 'all' && !this.checked) {
+                    const anyChecked = Array.from(yearCheckboxes).some(cb => cb.value !== 'all' && cb.checked);
+                    if (!anyChecked) yearAllCheckbox.checked = true;
+                }
+            });
+        });
+
+        // Bulk selection
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const bulkActionsBar = document.getElementById('bulkActionsBar');
+        const selectedCountSpan = document.getElementById('selectedCount');
+        const viewButton = document.getElementById('viewSelected');
+        const editButton = document.getElementById('editSelected');
+
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+                rowCheckboxes.forEach(checkbox => checkbox.checked = this.checked);
+                updateBulkActions();
+            });
+        }
+
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('row-checkbox')) {
+                updateBulkActions();
+            }
+        });
+
+        function updateBulkActions() {
+            const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+            const count = checkedBoxes.length;
+
+            if (count > 0 && bulkActionsBar) {
+                bulkActionsBar.style.display = 'block';
+                selectedCountSpan.textContent = count + ' selected';
+                if (viewButton) viewButton.style.display = count === 1 ? 'inline-block' : 'none';
+                if (editButton) editButton.style.display = count === 1 ? 'inline-block' : 'none';
+            } else {
+                if (bulkActionsBar) bulkActionsBar.style.display = 'none';
+                if (viewButton) viewButton.style.display = 'none';
+                if (editButton) editButton.style.display = 'none';
+            }
+
+            const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = count === rowCheckboxes.length && count > 0;
+            }
+        }
+
+        if (document.getElementById('clearSelection')) {
+            document.getElementById('clearSelection').addEventListener('click', function() {
+                document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = false);
+                if (selectAllCheckbox) selectAllCheckbox.checked = false;
+                updateBulkActions();
+            });
+        }
+
+        // View Selected (single) - navigates to donation detail page or edit
+        if (viewButton) {
+            viewButton.addEventListener('click', function() {
+                const checkedBox = document.querySelector('.row-checkbox:checked');
+                if (checkedBox) {
+                    const donationId = checkedBox.value;
+                    window.location.href = '/edit/donations/' + donationId;
+                }
+            });
+        }
+
+        // Edit Selected (single)
+        if (editButton) {
+            editButton.addEventListener('click', function() {
+                const checkedBox = document.querySelector('.row-checkbox:checked');
+                if (checkedBox) {
+                    const donationId = checkedBox.value;
+                    window.location.href = '/edit/donations/' + donationId;
+                }
+            });
+        }
+
+        // Delete Selected (bulk)
+        if (document.getElementById('deleteSelected')) {
+            document.getElementById('deleteSelected').addEventListener('click', function() {
+                const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+                const ids = Array.from(checkedBoxes).map(cb => cb.value);
+                const count = ids.length;
+
+                if (count === 0) return;
+
+                let confirmMessage;
+                let finalMessage;
+
+                // Create messages to ask users if they would like to delete
+                if (count === 1) {
+                    const name = checkedBoxes[0].getAttribute('data-name');
+                    confirmMessage = `Are you sure you want to delete ${name}?`;
+                    finalMessage = `${name} deleted`;
+                } else {
+                    confirmMessage = `Are you sure you want to delete ${count} donations?`;
+                    finalMessage = `${count} donations deleted`;
+                }
+
+                showDeleteConfirmation(confirmMessage, async function() {
+                    const table = 'donations'; // hardcoded per page
+
+                    try {
+                        // Call /delete/:table/:id for each selected id
+                        const responses = await Promise.all(
+                            ids.map(id =>
+                                fetch(`/delete/${table}/${id}`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Accept': 'application/json'
+                                    },
+                                    body: JSON.stringify({}) // body not used by route, can be empty
+                                })
+                            )
+                        );
+
+                        const allOk = responses.every(r => r.ok);
+
+                        if (!allOk) {
+                            console.error('Some delete requests failed:', responses);
+                            alert('Some donations could not be deleted. Please check the console for details.');
+                            return;
+                        }
+
+                        const message = encodeURIComponent(finalMessage);
+                        const messageType = 'success';
+
+                        window.location.href = `/donations?message=${message}&messageType=${messageType}`;
+
+                    } catch (err) {
+                        console.error('Error deleting donations:', err);
+                        alert('There was an error deleting donations. Please try again.');
+                    }
+                });
+            });
+        }
+
+        // Delete confirmation modal
+        function showDeleteConfirmation(message, onConfirm) {
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.id = 'deleteModal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Confirm Deletion</h3>
+                        <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p style="font-size: 1.1rem; color: #666;">${message}</p>
+                        <p style="margin-top: 1rem; color: #999;">This action cannot be undone.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-outline" onclick="closeDeleteModal()">Cancel</button>
+                        <button class="btn btn-danger" id="confirmDeleteBtn">Yes, Delete</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+                closeDeleteModal();
+                onConfirm();
+            });
+
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) closeDeleteModal();
+            });
+        }
+
+        function closeDeleteModal() {
+            const modal = document.getElementById('deleteModal');
+            if (modal) modal.remove();
+        }
+
+        // Clear Filters
+        if (document.getElementById('clearFilters')) {
+            document.getElementById('clearFilters').addEventListener('click', function() {
+                sessionStorage.removeItem('filtersVisible_donations');
+                window.location.href = '/donations';
+            });
+        }
+
+        // Auto-hide alerts
+        const alertMessages = document.querySelectorAll('.alert');
+        alertMessages.forEach(alert => {
+            setTimeout(() => {
+                alert.style.transition = 'opacity 0.5s';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            }, 5000);
+        });
     </script>
 </body>
 </html>

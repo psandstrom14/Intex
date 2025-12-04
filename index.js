@@ -1463,8 +1463,181 @@ app.get("/milestones", async (req, res) => {
 });
 
 // DONATIONS MAINTENANCE PAGE:
-app.get("/donations", (req, res) => {
-  res.render("donations");
+app.get("/donations", async (req, res) => {
+  try {
+    // flash messages + query messages
+    const sessionData = req.session || {};
+    let message = sessionData.flashMessage || "";
+    let messageType = sessionData.flashType || "success";
+
+    sessionData.flashMessage = null;
+    sessionData.flashType = null;
+
+    // fallback to query params (for deletes)
+    if (!message && req.query.message) {
+      message = req.query.message;
+      messageType = req.query.messageType || "success";
+    }
+
+    // --- filtering/sorting code ---
+    let { searchColumn, searchValue, months, years, sortColumn, sortOrder } =
+      req.query;
+
+    // defaults
+    searchColumn = searchColumn || "full_name";
+    sortOrder = sortOrder === "desc" ? "desc" : "asc";
+
+    // Base query with join to participants table
+    let query = knex("donations as d")
+      .join("participants as p", "d.participant_id", "p.participant_id")
+      .select(
+        "d.donation_id",
+        "d.participant_id",
+        "d.donation_date",
+        "d.donation_amount",
+        "p.participant_first_name",
+        "p.participant_last_name"
+      );
+
+    // Case-insensitive search
+    if (searchValue && searchColumn) {
+      const term = searchValue.trim();
+      if (term) {
+        if (searchColumn === "full_name") {
+          // Handle full name like "Jane", "Doe", or "Jane Doe Smith"
+          const parts = term.split(/\s+/);
+
+          if (parts.length === 1) {
+            // One word -> match either first OR last name
+            const likeOne = `%${parts[0]}%`;
+            query.where(function () {
+              this.where("p.participant_first_name", "ilike", likeOne).orWhere(
+                "p.participant_last_name",
+                "ilike",
+                likeOne
+              );
+            });
+          } else {
+            // Multiple words -> first piece as first name, last piece as last name
+            const firstLike = `%${parts[0]}%`;
+            const lastLike = `%${parts[parts.length - 1]}%`;
+
+            query.where(function () {
+              this.where(
+                "p.participant_first_name",
+                "ilike",
+                firstLike
+              ).andWhere("p.participant_last_name", "ilike", lastLike);
+            });
+          }
+        } else if (searchColumn === "participant_first_name") {
+          query.whereRaw(`CAST(p.participant_first_name AS TEXT) ILIKE ?`, [
+            `%${term}%`,
+          ]);
+        } else if (searchColumn === "participant_last_name") {
+          query.whereRaw(`CAST(p.participant_last_name AS TEXT) ILIKE ?`, [
+            `%${term}%`,
+          ]);
+        } else if (searchColumn === "donation_date") {
+          query.whereRaw(`CAST(d.donation_date AS TEXT) ILIKE ?`, [
+            `%${term}%`,
+          ]);
+        } else if (searchColumn === "donation_amount") {
+          query.whereRaw(`CAST(d.donation_amount AS TEXT) ILIKE ?`, [
+            `%${term}%`,
+          ]);
+        }
+      }
+    }
+
+    // Months filter (extract month from donation_date)
+    const monthArr = paramToArray(months);
+    if (!monthArr.includes("all")) {
+      const monthNums = monthArr
+        .map((m) => parseInt(m))
+        .filter((m) => !isNaN(m));
+      if (monthNums.length > 0) {
+        query.whereRaw("EXTRACT(MONTH FROM d.donation_date) IN (?)", [
+          monthNums,
+        ]);
+      }
+    }
+
+    // Years filter (extract year from donation_date)
+    const yearArr = paramToArray(years);
+    if (!yearArr.includes("all")) {
+      const yearNums = yearArr.map((y) => parseInt(y)).filter((y) => !isNaN(y));
+      if (yearNums.length > 0) {
+        query.whereRaw("EXTRACT(YEAR FROM d.donation_date) IN (?)", [yearNums]);
+      }
+    }
+
+    // Sorting
+    if (sortColumn) {
+      if (
+        sortColumn === "participant_first_name" ||
+        sortColumn === "participant_last_name"
+      ) {
+        query.orderBy(`p.${sortColumn}`, sortOrder);
+      } else {
+        query.orderBy(`d.${sortColumn}`, sortOrder);
+      }
+    } else {
+      // Default sort by donation_date descending
+      query.orderBy("d.donation_date", "desc");
+    }
+
+    // Get distinct years from database for filter options
+    const availableYearsPromise = knex("donations")
+      .select(knex.raw("DISTINCT EXTRACT(YEAR FROM donation_date) as year"))
+      .whereNotNull("donation_date")
+      .orderBy("year", "desc");
+
+    // Execute queries in parallel
+    const [results, yearRows] = await Promise.all([
+      query,
+      availableYearsPromise,
+    ]);
+
+    // Extract years from results
+    const availableYears = yearRows
+      .map((r) => Math.floor(parseFloat(r.year)))
+      .filter((y) => !isNaN(y))
+      .sort((a, b) => b - a);
+
+    const filters = {
+      searchColumn,
+      searchValue: searchValue || "",
+      months: monthArr,
+      years: yearArr,
+      sortColumn: sortColumn || "",
+      sortOrder,
+      availableYears,
+    };
+
+    res.render("donations", {
+      donations: results,
+      message,
+      messageType,
+      filters,
+    });
+  } catch (err) {
+    console.error("Error loading donations:", err);
+    res.render("donations", {
+      donations: [],
+      message: "Error loading donations",
+      messageType: "danger",
+      filters: {
+        searchColumn: "full_name",
+        searchValue: "",
+        months: ["all"],
+        years: ["all"],
+        sortColumn: "",
+        sortOrder: "asc",
+        availableYears: [],
+      },
+    });
+  }
 });
 
 /* ADD/EDIT/DELETE FUNCTIONALITY */
