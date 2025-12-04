@@ -1477,5 +1477,43 @@ app.get("/edit/:table/:id", async (req, res) => {
   }
 });
 
+// Route that updates the "entry" to the databases
+app.post("/edit/:table/:id", async (req, res) => {
+  const table_name = req.params.table;
+  const id = req.params.id;
+  const updatedData = req.body;
+
+  const primaryKeyByTable = {
+    participants: "participant_id",
+    milestones: "milestone_id",
+    events: "event_id",
+    survey_results: "survey_id",
+    donations: "donation_id",
+    event_registration: "event_registration_id",
+  };
+
+  const primaryKey = primaryKeyByTable[table_name];
+
+  try {
+    await knex(table_name).where(primaryKey, id).update(updatedData);
+
+    req.session.flashMessage = "Updated Successfully!";
+    req.session.flashType = "success";
+
+    // Special case: survey_results should redirect to /surveys
+    const redirectPath =
+      table_name === "survey_results" ? "/surveys" : `/${table_name}`;
+    res.redirect(redirectPath);
+  } catch (err) {
+    console.log("Error updating record:", err.message);
+    req.session.flashMessage = "Error updating record: " + err.message;
+    req.session.flashType = "danger";
+
+    const redirectPath =
+      table_name === "survey_results" ? "/surveys" : `/${table_name}`;
+    res.redirect(redirectPath);
+  }
+});
+
 // START TO LISTEN (& tell command line)
 app.listen(port, () => console.log("the server has started to listen"));
