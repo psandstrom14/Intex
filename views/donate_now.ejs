@@ -65,6 +65,65 @@
     </section>
     </main>
 
+    <!--Donation Pledge Form Inputs-->
+    <!--Main Content-->
+    <main id="main-content">
+        <div class="container">
+            <div class="add-card">
+                <!--Add Donations Form-->
+                <div id="donationForm">
+                    <form id="addForm" class="modern-form">
+                        
+                        <input type="hidden" name="participant_id" id="participant_id" value="<%= userId %>">
+    
+                        <div class="form-section">
+                            <h2 class="section-title">Donation Details</h2>
+                            <p class="section-description">Record the donation information</p>
+    
+                            <div class="form-group">
+                                <label class="form-label">Donation Date <span class="required">*</span></label>
+                                <input type="date" class="form-input" name="donation_date" id="donation_date" required>
+                            </div>
+    
+                            <div class="form-group">
+                                <label class="form-label">Donation Amount <span class="required">*</span></label>
+                                <div class="input-with-prefix">
+                                    <span class="input-prefix">$</span>
+                                    <input type="number" class="form-input form-input-with-prefix" name="donation_amount" id="donation_amount" placeholder="0.00" min="0.01" step="0.01" required>
+                                </div>
+                                <span class="form-hint">Enter amount in USD</span>
+                            </div>
+                        </div>
+    
+                        <div class="form-actions">
+                            <a href="/" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">Add Donation</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!--Thank You Message (Hidden by default)-->
+                <div id="thankYouMessage" style="display: none;">
+                    <div class="form-section" style="text-align: center; padding: 3rem 2rem;">
+                        <h2 class="section-title" style="color: #4CAF50; font-size: 2rem; margin-bottom: 1rem;">
+                            Thank You for Your Donation! 🎉
+                        </h2>
+                        <p class="section-description" style="font-size: 1.1rem; margin-bottom: 2rem;">
+                            Your generous contribution of <strong id="donationAmountDisplay"></strong> has been successfully recorded.
+                            <br><br>
+                            Your support makes a difference in empowering women and creating positive change.
+                        </p>
+                        
+                        <div class="form-actions" style="justify-content: center; gap: 1rem;">
+                            <button onclick="resetForm()" class="btn btn-primary">Make Another Donation</button>
+                            <a href="/profile/<%= userId %>?tab=donations" class="btn btn-secondary">View Donation History</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>    
+
     <!-- Footer -->
     <footer>
         <p>&copy; 2025 Ella Rises. All Rights Reserved.</p>
@@ -72,6 +131,16 @@
     </footer>
 
     <script>
+        // Set today's date as default value when page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            const dateInput = document.getElementById('donation_date');
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            dateInput.value = `${yyyy}-${mm}-${dd}`;
+        });
+
         // Allow Dropdown to handle delay to increase usability
         let dropdownTimeout;
         const dropdown = document.querySelector('.dropdown');
@@ -99,6 +168,95 @@
                     dropdownMenu.style.display = 'none';
                 }, 200);
             });
+        }
+
+        // Handle donation form submission
+        document.getElementById('addForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Disable submit button to prevent double submission
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
+            
+            // Get form values
+            const participantId = document.getElementById('participant_id').value;
+            const donationDate = document.getElementById('donation_date').value;
+            const donationAmount = document.getElementById('donation_amount').value;
+
+            // Validate fields
+            if (!participantId || !donationDate || !donationAmount) {
+                alert('Please fill out all fields');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Add Donation';
+                return;
+            }
+
+            // Create FormData object (this is what your server expects)
+            const formData = new URLSearchParams();
+            formData.append('participant_id', participantId);
+            formData.append('donation_date', donationDate);
+            formData.append('donation_amount', donationAmount);
+
+            try {
+                const response = await fetch('/add/donations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData.toString()
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Format the donation amount for display
+                    const amount = parseFloat(donationAmount).toFixed(2);
+                    document.getElementById('donationAmountDisplay').textContent = '$' + amount;
+                    
+                    // Hide form and show thank you message
+                    document.getElementById('donationForm').style.display = 'none';
+                    document.getElementById('thankYouMessage').style.display = 'block';
+                    
+                    // Scroll to top to show thank you message
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    alert('Error submitting donation: ' + (result.error || 'Unknown error'));
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Add Donation';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error submitting donation. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Add Donation';
+            }
+        });
+
+        // Function to reset form for another donation
+        function resetForm() {
+            // Reset form fields
+            document.getElementById('addForm').reset();
+            
+            // Re-set today's date
+            const dateInput = document.getElementById('donation_date');
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            dateInput.value = `${yyyy}-${mm}-${dd}`;
+            
+            // Re-enable submit button
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Add Donation';
+            
+            // Show form and hide thank you message
+            document.getElementById('donationForm').style.display = 'block';
+            document.getElementById('thankYouMessage').style.display = 'none';
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     </script>
 </body>

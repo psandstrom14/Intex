@@ -63,20 +63,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// // Content Security Policy middleware - allows localhost connections for development
-// app.use((req, res, next) => {
-//     res.setHeader(
-//     'Content-Security-Policy',
-//     "default-src 'self' http://localhost:* ws://localhost:* wss://localhost:*; " +
-//     "connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:*; " +
-//     "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
-//     "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
-//     "img-src 'self' data: https:; " +
-//     "font-src 'self' https://cdn.jsdelivr.net;"
-//     );
-//     next();
-// });
-
 // Global authentication middleware - runs on EVERY request (Needed for login functionality)
 app.use((req, res, next) => {
     // Skip authentication for specific login routes
@@ -86,7 +72,6 @@ app.use((req, res, next) => {
         req.path === "/about" ||
         req.path === "/performance" ||
         req.path === "/calendar" ||
-        req.path === "/donate_now" ||
         req.path === "/login" ||
         req.path === "/logout" ||
         req.path === "/signup"
@@ -596,6 +581,40 @@ app.post("/cancel-registration/:eventId", async (req, res) => {
 app.get("/donate_now", (req, res) => {
     res.render("donate_now");
 });
+// Handle donation submission
+app.post("/add/donations", async (req, res) => {
+    const newData = req.body;
+
+    console.log("Donation submission received:", newData); // Debug log
+
+    try {
+        // Validate required fields
+        if (!newData.participant_id || !newData.donation_date || !newData.donation_amount) {
+            return res.json({ 
+                success: false, 
+                error: "Missing required fields" 
+            });
+        }
+
+        // Insert into database
+        await knex("donations").insert(newData);
+        
+        console.log("Donation successfully inserted"); // Debug log
+        
+        // Return success response
+        res.json({ 
+            success: true, 
+            participant_id: newData.participant_id 
+        });
+    } catch (err) {
+        console.error("Error adding donation:", err); // Debug log
+        res.json({ 
+            success: false, 
+            error: err.message 
+        });
+    }
+});
+
 
 // PROFILE PAGE: will display user profile information, as well as individualized tables for milestones, donations, event registrations, and survey results
 // Route to display profile page (takes input id, which can be the users id or the id from the participants table)

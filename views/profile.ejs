@@ -633,6 +633,30 @@
         });
       });
 
+      // Check if URL has a tab parameter and switch to that tab
+      window.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get('tab');
+        
+        if (tabParam) {
+          // Find the button with matching data-tab attribute
+          const targetButton = document.querySelector(`[data-tab="${tabParam}"]`);
+          
+          if (targetButton) {
+            // Remove active class from all
+            tabButtons.forEach((btn) => btn.classList.remove("active"));
+            tabContents.forEach((content) => content.classList.remove("active"));
+            
+            // Add active class to target
+            targetButton.classList.add("active");
+            document.getElementById(`${tabParam}-tab`).classList.add("active");
+            
+            // Scroll to top of page
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }
+      });
+
       // Navigation Dropdown handling
       let dropdownTimeout;
       const dropdown = document.querySelector(".dropdown");
