@@ -1,3 +1,4 @@
+<!--profile pages (profile.ejs)-->
 <!--Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom-->
 <!--This page will display participant information-->
 <!--It will also display the participant milestones, donations, event registration, survey results-->
@@ -12,6 +13,7 @@
       <%=participant.participant_last_name%>- Ella Rises
     </title>
     <link rel="stylesheet" href="/css/style.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link rel="icon" type="image/x-icon" href="/logo.ico" />
   </head>
   <body>
@@ -86,7 +88,7 @@
       <!-- Tab Navigation -->
       <div class="tab-navigation">
         <button class="tab-btn active" data-tab="profile">
-          Profile Information
+          Personal Information
         </button>
         <button class="tab-btn" data-tab="milestones">Milestones</button>
         <button class="tab-btn" data-tab="donations">Donations</button>
@@ -94,7 +96,7 @@
         <button class="tab-btn" data-tab="surveys">Survey Results</button>
       </div>
 
-      <!-- Profile Information Tab -->
+      <!-- Personal Information Tab -->
       <div id="profile-tab" class="tab-content active">
         <!-- Detailed Information -->
         <div class="profile-sections-grid">
@@ -222,15 +224,9 @@
 
         <!-- Action Buttons -->
         <div class="profile-actions">
-          <form
-            method="POST"
-            action="/edit/participants/<%= participant.participant_id %>"
-            style="display: inline"
-          >
-            <button type="submit" class="btn btn-primary">Edit Profile</button>
-          </form>
-          <button onclick="showDeleteUserModal()" class="btn btn-danger">
-            Delete User
+          <button onclick="editProfile()" class="btn btn-primary">Edit Profile</button>
+          <button onclick="showDeleteAccountModal()" class="btn btn-danger">
+            Delete Account
           </button>
         </div>
       </div>
@@ -242,13 +238,7 @@
           <div class="table-header">
             <h2 class="table-title">Milestones</h2>
             <div class="table-actions">
-              <form
-                method="GET"
-                action="/add/milestones/<%= participant.participant_id %>"
-                style="display: inline"
-              >
-                <button type="submit" class="btn btn-add">Add Milestone</button>
-              </form>
+              <button onclick="addMilestone()" class="btn btn-add">Add Milestone</button>
               <button
                 id="milestones-edit-btn"
                 class="btn btn-secondary"
@@ -322,27 +312,7 @@
           <div class="table-header">
             <h2 class="table-title">Donations</h2>
             <div class="table-actions">
-              <form
-                method="GET"
-                action="/add/donations/<%= participant.participant_id %>"
-                style="display: inline"
-              >
-                <button type="submit" class="btn btn-add">Add Donation</button>
-              </form>
-              <button
-                id="donations-edit-btn"
-                class="btn btn-secondary"
-                style="display: none"
-              >
-                Edit Selected
-              </button>
-              <button
-                id="donations-delete-btn"
-                class="btn btn-danger"
-                style="display: none"
-              >
-                Delete Selected
-              </button>
+              <button onclick="makeDonation()" class="btn btn-add">Make a Donation</button>
             </div>
           </div>
           <!--Table-->
@@ -352,7 +322,6 @@
               <!--Table column titles-->
               <thead>
                 <tr>
-                  <th><input type="checkbox" id="donations-select-all" /></th>
                   <th>Date</th>
                   <th>Amount</th>
                 </tr>
@@ -361,13 +330,6 @@
               <tbody>
                 <% donations.forEach(function(donation) { %>
                 <tr>
-                  <td>
-                    <input
-                      type="checkbox"
-                      class="row-checkbox donations-checkbox"
-                      data-id="<%= donation.donation_id %>"
-                    />
-                  </td>
                   <td>
                     <%= donation.donation_date ? new
                     Date(donation.donation_date).toLocaleDateString() : 'N/A' %>
@@ -398,28 +360,8 @@
           <div class="table-header">
             <h2 class="table-title">Event Registrations</h2>
             <div class="table-actions">
-              <form
-                method="GET"
-                action="/add/event_registration/<%= participant.participant_id %>"
-                style="display: inline"
-              >
-                <button type="submit" class="btn btn-add">
-                  Add Registration
-                </button>
-              </form>
-              <button
-                id="events-edit-btn"
-                class="btn btn-secondary"
-                style="display: none"
-              >
-                Edit Selected
-              </button>
-              <button
-                id="events-delete-btn"
-                class="btn btn-danger"
-                style="display: none"
-              >
-                Delete Selected
+              <button onclick="registerForEvent()" class="btn btn-add">
+                Register for an Event
               </button>
             </div>
           </div>
@@ -430,12 +372,14 @@
               <!--Table Column Names-->
               <thead>
                 <tr>
-                  <th><input type="checkbox" id="events-select-all" /></th>
-                  <th>Registration ID</th>
-                  <th>Event ID</th>
+                  <th>Event Name</th>
+                  <th>Event Date</th>
+                  <th>Start Time</th>
+                  <th>End Time</th>
+                  <th>Location</th>
                   <th>Status</th>
                   <th>Attended</th>
-                  <th>Registered</th>
+                  <th>Registered On</th>
                   <th>Check-In</th>
                 </tr>
               </thead>
@@ -443,18 +387,14 @@
               <tbody>
                 <% eventRegistrations.forEach(function(reg) { %>
                 <tr>
-                  <td>
-                    <input
-                      type="checkbox"
-                      class="row-checkbox events-checkbox"
-                      data-id="<%= reg.event_registration_id %>"
-                    />
-                  </td>
-                  <td><%= reg.event_registration_id %></td>
-                  <td><%= reg.event_id %></td>
+                  <td><%= reg.event_name %></td>
+                  <td><%= reg.event_date ? new Date(reg.event_date).toLocaleDateString() : 'N/A' %></td>
+                  <td><%= reg.event_start_time || 'N/A' %></td>
+                  <td><%= reg.event_end_time || 'N/A' %></td>
+                  <td><%= reg.event_location || 'N/A' %></td>
                   <td>
                     <span
-                      class="badge <%= reg.registration_status === 'confirmed' ? 'badge-success' : 'badge-warning' %>"
+                      class="badge <%= reg.registration_status === 'confirmed' || reg.registration_status === 'attended' ? 'badge-success' : reg.registration_status === 'registered' ? 'badge-warning' : 'badge-secondary' %>"
                       ><%= reg.registration_status || 'Pending' %></span
                     >
                   </td>
@@ -492,6 +432,22 @@
           <!--table header-->
           <div class="table-header">
             <h2 class="table-title">Survey Results</h2>
+            <div class="table-actions">
+              <button
+                id="surveys-edit-btn"
+                class="btn btn-secondary"
+                style="display: none"
+              >
+                Edit Selected
+              </button>
+              <button
+                id="surveys-delete-btn"
+                class="btn btn-danger"
+                style="display: none"
+              >
+                Delete Selected
+              </button>
+            </div>
           </div>
           <% if (surveys && surveys.length > 0) { %>
           <div>
@@ -499,14 +455,16 @@
               <!--table column names-->
               <thead>
                 <tr>
-                  <th>Survey ID</th>
-                  <th>Registration ID</th>
+                  <th><input type="checkbox" id="surveys-select-all" /></th>
+                  <th>Event Name</th>
+                  <th>Event Date</th>
                   <th>Satisfaction</th>
                   <th>Usefulness</th>
                   <th>Instructor</th>
                   <th>Recommendation</th>
                   <th>Overall</th>
                   <th>NPS Bucket</th>
+                  <th>Comments</th>
                   <th>Submitted</th>
                 </tr>
               </thead>
@@ -514,8 +472,15 @@
               <tbody>
                 <% surveys.forEach(function(survey) { %>
                 <tr>
-                  <td><%= survey.survey_id %></td>
-                  <td><%= survey.event_registration_id %></td>
+                  <td>
+                    <input
+                      type="checkbox"
+                      class="row-checkbox surveys-checkbox"
+                      data-id="<%= survey.survey_id %>"
+                    />
+                  </td>
+                  <td><%= survey.event_name %></td>
+                  <td><%= survey.event_date ? new Date(survey.event_date).toLocaleDateString() : 'N/A' %></td>
                   <td><%= survey.survey_satisfaction_score || 'N/A' %></td>
                   <td><%= survey.survey_usefulness_score || 'N/A' %></td>
                   <td><%= survey.survey_instructor_score || 'N/A' %></td>
@@ -532,21 +497,22 @@
                     </span>
                     <% } else { %> N/A <% } %>
                   </td>
+                  <td style="text-align: center;">
+                    <% if (survey.survey_comments && survey.survey_comments.trim() !== '') { %>
+                      <button class="btn btn-small view-comments-btn" 
+                              data-comments="<%= survey.survey_comments.replace(/"/g, '&quot;').replace(/'/g, '&#39;') %>"
+                              data-event="<%= survey.event_name %>"
+                              style="padding: 0.3rem 0.6rem; font-size: 0.9rem;">
+                          <span class="material-symbols-outlined">mode_comment</span>
+                      </button>
+                    <% } %>
+                  </td>
                   <td>
                     <%= survey.submission_date ? new
                     Date(survey.submission_date).toLocaleDateString() : 'N/A' %>
                   </td>
                 </tr>
-                <% if (survey.survey_comments) { %>
-                <tr class="survey-comments-row">
-                  <td
-                    colspan="9"
-                    style="background-color: #f9f5ea; padding: 1rem"
-                  >
-                    <strong>Comments:</strong> <%= survey.survey_comments %>
-                  </td>
-                </tr>
-                <% } %> <% }); %>
+                <% }); %>
               </tbody>
             </table>
           </div>
@@ -561,7 +527,43 @@
       </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
+    <!-- Delete Account Confirmation Modal -->
+    <div id="deleteAccountModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Confirm Account Deletion</h3>
+          <button class="modal-close" onclick="closeDeleteAccountModal()">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size: 1.1rem; color: #d32f2f; font-weight: 600; margin-bottom: 1rem;">
+            ⚠️ Warning: This action is permanent
+          </p>
+          <p>
+            Are you sure you want to delete your account? This will permanently remove:
+          </p>
+          <ul style="margin: 1rem 0; padding-left: 2rem; text-align: left;">
+            <li>Your personal information</li>
+            <li>All your milestones</li>
+            <li>Your donation history</li>
+            <li>Your event registrations</li>
+            <li>Your survey responses</li>
+          </ul>
+          <p style="font-weight: 600; color: #d32f2f;">
+            This action cannot be undone. You will be logged out immediately.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeDeleteAccountModal()">
+            Cancel
+          </button>
+          <button id="confirmDeleteAccountBtn" class="btn btn-danger">Yes, Delete My Account</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal (for other tabs) -->
     <div id="deleteModal" class="modal">
       <div class="modal-content">
         <div class="modal-header">
@@ -581,6 +583,25 @@
             Cancel
           </button>
           <button id="confirmDeleteBtn" class="btn btn-danger">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comments Modal -->
+    <div id="commentsModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Survey Comments</h3>
+          <button class="modal-close" onclick="closeCommentsModal()">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <p id="commentsEventInfo" style="margin-bottom: 0.5rem; color: #666; font-weight: 600;"></p>
+          <p id="commentsText" style="font-size: 1rem; color: #333; white-space: pre-wrap; line-height: 1.6;"></p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" onclick="closeCommentsModal()">Close</button>
         </div>
       </div>
     </div>
@@ -615,6 +636,8 @@
     </footer>
 
     <script>
+      const participantId = <%- JSON.stringify(participant.participant_id) %>;
+
       // Tab Switching
       const tabButtons = document.querySelectorAll(".tab-btn");
       const tabContents = document.querySelectorAll(".tab-content");
@@ -686,6 +709,85 @@
         });
       }
 
+      // Navigation functions for buttons
+      function editProfile() {
+        window.location.href = `/profile-edit/participants/${participantId}`;
+      }
+
+      function addMilestone() {
+        window.location.href = `/add/milestones/${participantId}`;
+      }
+
+      function makeDonation() {
+        window.location.href = '/donate_now';
+      }
+
+      function registerForEvent() {
+        window.location.href = '/calendar';
+      }
+
+      // Delete Account Modal Functions
+      function showDeleteAccountModal() {
+        document.getElementById('deleteAccountModal').classList.add('active');
+      }
+
+      function closeDeleteAccountModal() {
+        document.getElementById('deleteAccountModal').classList.remove('active');
+      }
+
+      // Delete Account Confirmation
+      document.getElementById('confirmDeleteAccountBtn').addEventListener('click', async function() {
+        try {
+          const response = await fetch(`/profile-delete/participants/${participantId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            // If there's a redirect URL (for account deletion), go there
+            if (result.redirect) {
+              window.location.href = result.redirect;
+            } else {
+              // Otherwise just reload the page
+              window.location.reload();
+            }
+          } else {
+            alert('Error deleting account. Please try again.');
+            closeDeleteAccountModal();
+          }
+        } catch (err) {
+          console.error('Error deleting account:', err);
+          alert('There was a problem deleting your account.');
+          closeDeleteAccountModal();
+        }
+      });
+
+      // Comments Modal Functions
+      function showCommentsModal(comments, eventName) {
+        document.getElementById('commentsEventInfo').textContent = eventName;
+        document.getElementById('commentsText').textContent = comments;
+        document.getElementById('commentsModal').classList.add('active');
+      }
+
+      function closeCommentsModal() {
+        document.getElementById('commentsModal').classList.remove('active');
+      }
+
+      // View Comments buttons
+      document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.view-comments-btn').forEach(button => {
+          button.addEventListener('click', function() {
+            const comments = this.getAttribute('data-comments');
+            const event = this.getAttribute('data-event');
+            showCommentsModal(comments, event);
+          });
+        });
+      });
+
       // Checkbox management for each table
       function setupCheckboxes(tablePrefix) {
         const selectAll = document.getElementById(`${tablePrefix}-select-all`);
@@ -711,7 +813,7 @@
           });
         });
 
-        // Edit button functionality
+        // Edit button functionality (uses profile-specific routes)
         if (editBtn) {
           editBtn.addEventListener("click", function () {
             const selectedIds = Array.from(checkboxes)
@@ -719,18 +821,23 @@
               .map((cb) => cb.getAttribute("data-id"));
 
             if (selectedIds.length === 1) {
-              const form = document.createElement("form");
-              form.method = "POST";
-              form.action = `/edit/${tablePrefix}/${selectedIds[0]}`;
-              document.body.appendChild(form);
-              form.submit();
+              // Map UI prefixes to actual DB table names
+              const tableNameMap = {
+                milestones: "milestones",
+                donations: "donations",
+                events: "event_registrations",
+                surveys: "survey_results"
+              };
+
+              const tableName = tableNameMap[tablePrefix] || tablePrefix;
+              window.location.href = `/profile-edit/${tableName}/${selectedIds[0]}`;
             } else {
               alert("Please select exactly one item to edit.");
             }
           });
         }
 
-        // Delete button functionality
+        // Delete button functionality (uses profile-specific routes)
         if (deleteBtn) {
           deleteBtn.addEventListener("click", function () {
             const selectedIds = Array.from(checkboxes)
@@ -738,15 +845,15 @@
               .map((cb) => cb.getAttribute("data-id"));
 
             if (selectedIds.length > 0) {
-              // Map UI prefixes to actual DB table names used in /delete/:table/:id
+              // Map UI prefixes to actual DB table names
               const tableNameMap = {
                 milestones: "milestones",
                 donations: "donations",
                 events: "event_registrations",
+                surveys: "survey_results"
               };
 
               const tableName = tableNameMap[tablePrefix] || tablePrefix;
-
               showDeleteModal(tableName, selectedIds);
             }
           });
@@ -788,7 +895,7 @@
         }
       }
 
-      // Delete modal functionality
+      // Delete modal functionality (for other tabs)
       let currentDeleteType = "";
       let currentDeleteIds = [];
 
@@ -804,7 +911,7 @@
         currentDeleteIds = [];
       }
 
-      // call the GET /delete/:table/:id in a loop
+      // Confirm delete for other tabs (uses profile-specific routes)
       const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
 
       if (confirmDeleteBtn) {
@@ -815,10 +922,10 @@
           }
 
           try {
-            // Fire one POST per ID using your existing /delete/:table/:id route
+            // Fire one POST per ID using profile-specific delete route
             const responses = await Promise.all(
               currentDeleteIds.map((id) =>
-                fetch(`/delete/${currentDeleteType}/${id}`, {
+                fetch(`/profile-delete/${currentDeleteType}/${id}`, {
                   method: "POST",
                 })
               )
@@ -827,8 +934,17 @@
             const allOk = responses.every((r) => r.ok);
 
             if (allOk) {
-              // Refresh so the deleted rows disappear
-              window.location.reload();
+              // Map table names to tab names for redirect
+              const tabMap = {
+                milestones: 'milestones',
+                donations: 'donations',
+                event_registrations: 'events',
+                survey_results: 'surveys'
+              };
+
+              const tab = tabMap[currentDeleteType] || 'profile';
+              // Reload page with current tab
+              window.location.href = `/profile/${participantId}?tab=${tab}`;
             } else {
               alert(
                 "One or more deletions failed. Check the server logs for details."
@@ -845,8 +961,7 @@
 
       // Initialize checkboxes for all tables
       setupCheckboxes("milestones");
-      setupCheckboxes("donations");
-      setupCheckboxes("events");
+      setupCheckboxes("surveys");
     </script>
   </body>
 </html>

@@ -1,4 +1,5 @@
-// Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom
+// index.js
+// // Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom
 // This code will allow users of a non profit to manage visitor information, user information, events, milestones, and donations
 
 // REQUIRE LIBRARIES AND STORE IN VARIABLE (if applicable):
@@ -670,8 +671,9 @@ app.get("/profile/:id", async (req, res) => {
             )
             .orderBy("milestone_date", "desc");
 
-        // Get donations sorted by most recent first
+        // Get donations sorted by most recent first (only for this participant)
         const donations = await knex("donations")
+            .where("participant_id", participantId)
             .select("donation_id", "donation_date", "donation_amount")
             .orderBy("donation_date", "desc");
 
@@ -680,32 +682,39 @@ app.get("/profile/:id", async (req, res) => {
             donation.donation_amount = parseFloat(donation.donation_amount) || 0;
         });
 
-        // Get event registrations sorted by most recent first
-        const eventRegistrations = await knex("event_registrations")
-            .where("participant_id", participantId)
+        // Get event registrations with event details sorted by most recent first
+        const eventRegistrations = await knex("event_registrations as er")
+            .join("events as e", "er.event_id", "e.event_id")
+            .where("er.participant_id", participantId)
             .select(
-                "event_registration_id",
-                "participant_id",
-                "event_id",
-                "registration_status",
-                "registration_attended_flag",
-                "registration_created_at_date",
-                "registration_created_at_time",
-                "registration_check_in_date",
-                "registration_check_in_time"
+                "er.event_registration_id",
+                "er.participant_id",
+                "er.event_id",
+                "er.registration_status",
+                "er.registration_attended_flag",
+                "er.registration_created_at_date",
+                "er.registration_created_at_time",
+                "er.registration_check_in_date",
+                "er.registration_check_in_time",
+                "e.event_name",
+                "e.event_date",
+                "e.event_start_time",
+                "e.event_end_time",
+                "e.event_location"
             )
             .orderBy([
-                { column: "registration_created_at_date", order: "desc" },
-                { column: "registration_created_at_time", order: "desc" },
+                { column: "er.registration_created_at_date", order: "desc" },
+                { column: "er.registration_created_at_time", order: "desc" },
             ]);
 
-        // Get survey results through event_registrations join
+        // Get survey results through event_registrations join with event details
         const surveys = await knex("survey_results as sr")
             .innerJoin(
                 "event_registrations as er",
                 "sr.event_registration_id",
                 "er.event_registration_id"
             )
+            .innerJoin("events as e", "er.event_id", "e.event_id")
             .where("er.participant_id", participantId)
             .select(
                 "sr.survey_id",
@@ -718,7 +727,9 @@ app.get("/profile/:id", async (req, res) => {
                 "sr.survey_nps_bucket",
                 "sr.survey_comments",
                 "sr.submission_date",
-                "sr.submission_time"
+                "sr.submission_time",
+                "e.event_name",
+                "e.event_date"
             )
             .orderBy([
                 { column: "sr.submission_date", order: "desc" },
@@ -750,6 +761,179 @@ app.get("/profile/:id", async (req, res) => {
     } catch (error) {
         console.error("Error loading profile dashboard:", error);
         res.status(500).send("Error loading profile dashboard");
+    }
+});
+
+// PROFILE EDIT ROUTE (called from profile page)
+app.get("/profile-edit/:table/:id", async (req, res) => {
+    const table_name = req.params.table;
+    const id = req.params.id;
+
+    const primaryKeyByTable = {
+        participants: "participant_id",
+        milestones: "milestone_id",
+        events: "event_id",
+        survey_results: "survey_id",
+        donations: "donation_id",
+        event_registrations: "event_registration_id",
+    };
+
+    const primaryKey = primaryKeyByTable[table_name];
+
+    try {
+        let info;
+
+        // Special handling for survey_results - need to join to get event info
+        if (table_name === "survey_results") {
+            info = await knex("survey_results as s")
+                .join(
+                    "event_registrations as er",
+                    "s.event_registration_id",
+                    "er.event_registration_id"
+                )
+                .join("events as e", "er.event_id", "e.event_id")
+                .join("participants as p", "er.participant_id", "p.participant_id")
+                .where("s.survey_id", id)
+                .select(
+                    "s.*",
+                    "e.event_id",
+                    "e.event_name",
+                    "e.event_date",
+                    "p.participant_id"
+                )
+                .first();
+        } else {
+            info = await knex(table_name).where(primaryKey, id).first();
+        }
+
+        let events = [];
+        let event_types = [];
+
+        if (table_name === "events") {
+            event_types = await knex("event_types")
+                .select("event_type_id", "event_type_name")
+                .orderBy("event_type_name");
+        }
+
+        if (
+            table_name === "event_registrations" ||
+            table_name === "survey_results" ||
+            table_name === "events"
+        ) {
+            events = await knex("events")
+                .select(
+                    "event_id",
+                    "event_name",
+                    "event_date",
+                    "event_start_time",
+                    "event_end_time"
+                )
+                .orderBy(["event_name", "event_date", "event_start_time"]);
+        }
+
+        res.render("edit", { 
+            table_name, 
+            info, 
+            id, 
+            events, 
+            event_types,
+            fromProfile: true  // Flag to indicate this edit came from profile
+        });
+    } catch (err) {
+        console.error("Error fetching entry:", err.message);
+        // Redirect back to profile with error
+        req.session.flashMessage = "Error loading edit page: " + err.message;
+        req.session.flashType = "danger";
+        res.redirect(`/profile/${req.session.user.id}?tab=profile`);
+    }
+});
+
+// PROFILE UPDATE ROUTE (called from edit page when editing from profile)
+app.post("/profile-edit/:table/:id", async (req, res) => {
+    const table_name = req.params.table;
+    const id = req.params.id;
+    const updatedData = req.body;
+
+    const primaryKeyByTable = {
+        participants: "participant_id",
+        milestones: "milestone_id",
+        events: "event_id",
+        survey_results: "survey_id",
+        donations: "donation_id",
+        event_registrations: "event_registration_id",
+    };
+
+    const primaryKey = primaryKeyByTable[table_name];
+
+    try {
+        await knex(table_name).where(primaryKey, id).update(updatedData);
+
+        req.session.flashMessage = "Updated Successfully!";
+        req.session.flashType = "success";
+
+        // Always redirect back to profile with appropriate tab
+        const tabMap = {
+            participants: "profile",
+            milestones: "milestones",
+            donations: "donations",
+            event_registrations: "events",
+            survey_results: "surveys"
+        };
+
+        const tab = tabMap[table_name] || "profile";
+        res.redirect(`/profile/${req.session.user.id}?tab=${tab}`);
+    } catch (err) {
+        console.log("Error updating record:", err.message);
+        req.session.flashMessage = "Error updating record: " + err.message;
+        req.session.flashType = "danger";
+
+        res.redirect(`/profile/${req.session.user.id}?tab=profile`);
+    }
+});
+
+// PROFILE DELETE ROUTE (called from profile page)
+app.post("/profile-delete/:table/:id", async (req, res) => {
+    const { table, id } = req.params;
+
+    const primaryKeyByTable = {
+        participants: "participant_id",
+        milestones: "milestone_id",
+        events: "event_id",
+        survey_results: "survey_id",
+        donations: "donation_id",
+        event_registrations: "event_registration_id",
+    };
+
+    const primaryKey = primaryKeyByTable[table];
+
+    try {
+        // Special handling for deleting the user's own account (participants table)
+        if (table === "participants" && parseInt(id) === req.session.user.id) {
+            // Delete the participant
+            await knex(table).where(primaryKey, id).del();
+            
+            // Log them out
+            req.session.isLoggedIn = false;
+            req.session.user = null;
+            
+            // Destroy session and redirect to home
+            req.session.destroy((err) => {
+                if (err) {
+                    console.error("Error logging out after account deletion:", err);
+                }
+                res.status(200).json({ 
+                    success: true,
+                    redirect: "/"
+                });
+            });
+        } else {
+            // Normal delete for other records
+            await knex(table).where(primaryKey, id).del();
+            res.status(200).json({ success: true });
+        }
+    } catch (err) {
+        console.log("Error deleting record:", err.message);
+        res.status(500).json({ error: err.message });
     }
 });
 
