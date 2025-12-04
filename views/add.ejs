@@ -240,11 +240,21 @@
                                 const cleanedEventNames = [];
 
                                 events.forEach(ev => {
-                                    const cleanedName = (ev.event_name || "")
-                                        .replace(/[{}"]/g, "")              // strip postgres array braces/quotes
-                                        .split(",")
-                                        .map(part => part.trim())
-                                        .filter(Boolean)[0] || ev.event_name;
+                                    // Normalize event_name whether it comes back as a PG array string, a JS array, or plain text
+                                    const rawName = ev.event_name;
+                                    let cleanedName = "";
+
+                                    if (Array.isArray(rawName)) {
+                                        cleanedName = rawName.find(n => (n || "").trim()) || "";
+                                    } else {
+                                        cleanedName = (rawName || "")
+                                            .replace(/[{}"]/g, "") // strip postgres array braces/quotes
+                                            .split(",")
+                                            .map(part => part.trim())
+                                            .find(Boolean) || rawName || "";
+                                    }
+
+                                    if (!cleanedName) return;
 
                                     if (!seenEventNames.has(cleanedName)) {
                                         seenEventNames.add(cleanedName);
