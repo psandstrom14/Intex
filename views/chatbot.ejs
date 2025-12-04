@@ -1,0 +1,112 @@
+<!--Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom-->
+<!--This page will give the user a chatbot interface to work on their resumes and applications.-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Title - Ella Rises</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" type="image/x-icon" href="/logo.ico" />
+</head>
+<body>
+    <!-- Skip Navigation Link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo">
+                <a href="/"><img src="/images/logo.png" alt="Ella Rises Logo"> ELLA RISES</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/about">About</a></li>
+                <li><a href="/performance">Performance</a></li>
+                <li><a href="/calendar">Calendar</a></li>
+                <li><a href="/donate_now">Donate Now</a></li>
+
+                <% if (isLoggedIn && userId) { %>
+                    <li><a href="/profile/<%= userId %>">Profile</a></li>
+                <% } %>
+
+                <% if (role === "admin") { %>
+                    <li class="dropdown">
+                        <span class="dropdown-toggle">
+                            <a href="#" class="selected-nav">Pages ▾</a>
+                        </span>
+                        <ul class="dropdown-menu">
+                            <li><a href="/participants">Participants</a></li>
+                            <li><a href="/events">Events</a></li>
+                            <li><a href="/event_registrations">Event Registrations</a></li>
+                            <li><a href="/surveys">Surveys</a></li>
+                            <li><a href="/milestones">Milestones</a></li>
+                            <li><a href="/donations">Donations</a></li>
+                        </ul>
+                    </li>
+                <% } %>
+
+                <% if (isLoggedIn) { %>
+                    <li><a href="/logout" class="login-btn">Logout</a></li>
+                <% } else { %>
+                    <li><a href="/login" class="login-btn">Login</a></li>
+                <% } %>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Page Title</h1>
+            <p>Page subtitle or description</p>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main id="main-content" class="container">
+        <section class="mt-4">
+            <h2>Section Heading</h2>
+            <p>Your content goes here...</p>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 Ella Rises. All Rights Reserved.</p>
+        <p style="margin-top: 1rem; font-size: 0.9rem;">Making a difference, one woman at a time.</p>
+    </footer>
+
+    <script>
+        // Allow Dropdown to handle delay to increase usability
+        let dropdownTimeout;
+        const dropdown = document.querySelector('.dropdown');
+        const dropdownMenu = document.querySelector('.dropdown-menu');
+
+        if (dropdown && dropdownMenu) {
+            dropdown.addEventListener('mouseenter', function() {
+                clearTimeout(dropdownTimeout);
+                dropdownMenu.style.display = 'block';
+            });
+
+            dropdown.addEventListener('mouseleave', function() {
+                dropdownTimeout = setTimeout(function() {
+                    dropdownMenu.style.display = 'none';
+                }, 200); // 200ms delay before closing
+            });
+
+            dropdownMenu.addEventListener('mouseenter', function() {
+                clearTimeout(dropdownTimeout);
+                dropdownMenu.style.display = 'block';
+            });
+
+            dropdownMenu.addEventListener('mouseleave', function() {
+                dropdownTimeout = setTimeout(function() {
+                    dropdownMenu.style.display = 'none';
+                }, 200);
+            });
+        }
+    </script>
+</body>
+</html>
