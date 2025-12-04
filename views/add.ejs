@@ -41,7 +41,7 @@
                         <ul class="dropdown-menu">
                             <li><a href="/participants">Participants</a></li>
                             <li><a href="/events">Events</a></li>
-                                                      <li><a href="/event_registrations">Event Registrations</a></li>
+                            <li><a href="/event_registrations">Event Registrations</a></li>
 
                             <li><a href="/surveys">Surveys</a></li>
                             <li><a href="/milestones">Milestones</a></li>
@@ -239,7 +239,7 @@
                         <div class="form-group">
                             <label class="form-label">Event Name <span class="required">*</span></label>
                             <select class="form-select" name="event_name" id="eventSelect" required>
-                            <option value="">Select an Event</option>
+                                <option value="">Select an Event</option>
                             <% 
                                 const seenEventNames = new Set();
                                 const cleanedEventNames = [];
@@ -270,7 +270,7 @@
                             <% cleanedEventNames.forEach(name => { %>
                                 <option value="<%= name %>"><%= name %></option>
                             <% }) %>
-                        </select>
+                            </select>
 
                             <input type="hidden" name="event_name" id="eventNameInput">    
                         </div>
