@@ -41,7 +41,7 @@
                           <a href="#">Pages ▾</a>
                       </span>
                       <ul class="dropdown-menu">
-                          <li><a href="/participants">Participants</a></li>
+                          <li><a href="/users">Participants</a></li>
                           <li><a href="/events">Events</a></li>
                           <li><a href="/event_registrations">Event Registrations</a></li>
                           <li><a href="/surveys">Surveys</a></li>
@@ -224,7 +224,7 @@
         <div class="profile-actions">
           <form
             method="POST"
-            action="/edit/participants/<%= participant.participant_id %>"
+            action="/edit/users/<%= participant.participant_id %>"
             style="display: inline"
           >
             <button type="submit" class="btn btn-primary">Edit Profile</button>

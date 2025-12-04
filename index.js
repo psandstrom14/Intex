@@ -116,11 +116,11 @@ app.post("/login", (req, res) => {
     let username = req.body.username;
     let password = req.body.password;
 
-    knex
-        .select()
-        .from("participants")
-        .where({ participant_username: username, participant_password: password })
-        .first()
+  knex
+    .select()
+    .from("users")
+    .where({ participant_username: username, participant_password: password })
+    .first()
         .then((user) => {
             if (user) {
                 req.session.user = {
@@ -165,8 +165,8 @@ app.post('/signup', async (req, res) => {
     try {
         const newData = req.body;
 
-        // Insert new participant and get the full row back
-        const [user] = await knex("participants")
+        // Insert new user and get the full row back
+        const [user] = await knex("users")
             .insert(newData)
             .returning("*");  // returns the inserted row in PostgreSQL
 
@@ -606,38 +606,38 @@ app.get("/profile/:id", async (req, res) => {
     const participantId = req.params.id;
 
     try {
-        // Get participant information with total donations
-        const participant = await knex("participants")
+        // Get user information with total donations
+        const participant = await knex("users")
             .leftJoin(
                 "donations",
-                "participants.participant_id",
+                "users.participant_id",
                 "donations.participant_id"
             )
-            .where("participants.participant_id", participantId)
-            .groupBy("participants.participant_id")
+            .where("users.participant_id", participantId)
+            .groupBy("users.participant_id")
             .select(
-                "participants.participant_id",
-                "participants.participant_email",
-                "participants.participant_first_name",
-                "participants.participant_last_name",
-                "participants.participant_dob",
-                "participants.participant_role",
-                "participants.participant_phone",
-                "participants.participant_city",
-                "participants.participant_state",
-                "participants.participant_zip",
-                "participants.participant_school_or_employer",
-                "participants.participant_field_of_interest",
-                "participants.participant_username",
+                "users.participant_id",
+                "users.participant_email",
+                "users.participant_first_name",
+                "users.participant_last_name",
+                "users.participant_dob",
+                "users.participant_role",
+                "users.participant_phone",
+                "users.participant_city",
+                "users.participant_state",
+                "users.participant_zip",
+                "users.participant_school_or_employer",
+                "users.participant_field_of_interest",
+                "users.participant_username",
                 knex.raw(
                     'COALESCE(SUM(donations.donation_amount), 0) as "Total_Donations"'
                 )
             )
             .first();
 
-        // Check if participant exists
+        // Check if user exists
         if (!participant) {
-            return res.status(404).send("Participant not found");
+            return res.status(404).send("User not found");
         }
 
         // Convert Total_Donations to a number
@@ -739,10 +739,6 @@ app.get("/profile/:id", async (req, res) => {
 
 /* DASHBOARD PAGES */
 // USERS MAINTENANCE PAGE:
-<<<<<<< HEAD
-app.get("/users", (req, res) => {
-    res.render("users");
-=======
 app.get("/users", async (req, res) => {
   try {
     // flash messages + query messages
@@ -775,8 +771,7 @@ app.get("/users", async (req, res) => {
     searchColumn = searchColumn || "full_name";
     sortOrder = sortOrder === "desc" ? "desc" : "asc";
 
-    // Query ALL users (no role filter)
-    let query = knex("participants");
+    let query = knex("users");
 
     // Filter by role - only show participants
     query.where("participant_role", "participant");
@@ -787,6 +782,7 @@ app.get("/users", async (req, res) => {
       if (term) {
         if (searchColumn === "full_name") {
           const parts = term.split(/\s+/);
+
           if (parts.length === 1) {
             const likeOne = `%${parts[0]}%`;
             query.where(function () {
@@ -799,6 +795,7 @@ app.get("/users", async (req, res) => {
           } else {
             const firstLike = `%${parts[0]}%`;
             const lastLike = `%${parts[parts.length - 1]}%`;
+
             query.where(function () {
               this.where("participant_first_name", "ilike", firstLike).andWhere(
                 "participant_last_name",
@@ -892,7 +889,6 @@ app.get("/users", async (req, res) => {
       role: req.session.user?.role || null,
     });
   }
->>>>>>> origin/main
 });
 
 // PARTICIPANT MAINTENANCE PAGE:
@@ -906,12 +902,7 @@ app.get("/participants", async (req, res) => {
         sessionData.flashMessage = null;
         sessionData.flashType = null;
 
-<<<<<<< HEAD
-        // fallback to query params (for deletes)
-        if (!message && req.query.message) {
-            message = req.query.message;
-            messageType = req.query.messageType || "success";
-=======
+   
     // fallback to query params (for deletes)
     if (!message && req.query.message) {
       message = req.query.message;
@@ -934,8 +925,8 @@ app.get("/participants", async (req, res) => {
     searchColumn = searchColumn || "full_name";
     sortOrder = sortOrder === "desc" ? "desc" : "asc";
 
-    let query = knex("participants");
-
+    let query = knex("users");
+    
     // Filter by role - only show participants
     query.where("participant_role", "participant");
 
@@ -975,7 +966,6 @@ app.get("/participants", async (req, res) => {
           // Existing behavior for single column (non full_name searches)
           const likeTerm = `%${term}%`;
           query.whereRaw(`CAST(${searchColumn} AS TEXT) ILIKE ?`, [likeTerm]);
->>>>>>> origin/main
         }
 
         // --- filtering/sorting code ---
@@ -1358,7 +1348,7 @@ app.get("/surveys", async (req, res) => {
                 "s.event_registration_id",
                 "er.event_registration_id"
             )
-            .join("participants as p", "er.participant_id", "p.participant_id")
+            .join("users as p", "er.participant_id", "p.participant_id")
             .join("events as e", "er.event_id", "e.event_id")
             .select(
                 "s.survey_id",
@@ -1565,7 +1555,7 @@ app.get("/milestones", async (req, res) => {
 
         // Base query with join to participants table
         let query = knex("milestones as m")
-            .join("participants as p", "m.participant_id", "p.participant_id")
+            .join("users as p", "m.participant_id", "p.participant_id")
             .select(
                 "m.milestone_id",
                 "m.participant_id",
@@ -1739,7 +1729,7 @@ app.get("/donations", async (req, res) => {
 
         // Base query with join to participants table
         let query = knex("donations as d")
-            .join("participants as p", "d.participant_id", "p.participant_id")
+            .join("users as p", "d.participant_id", "p.participant_id")
             .select(
                 "d.donation_id",
                 "d.participant_id",
@@ -2006,7 +1996,8 @@ app.post("/delete/:table/:id", async (req, res) => {
     const { table, id } = req.params;
 
     const primaryKeyByTable = {
-        participants: "participant_id",
+        users: "participant_id",
+        participants: "participant_id", // backward compatibility
         milestones: "milestone_id",
         events: "event_id",
         survey_results: "survey_id",
@@ -2032,7 +2023,8 @@ app.get("/edit/:table/:id", async (req, res) => {
     const id = req.params.id;
 
     const primaryKeyByTable = {
-        participants: "participant_id",
+        users: "participant_id",
+        participants: "participant_id", // backward compatibility
         milestones: "milestone_id",
         events: "event_id",
         survey_results: "survey_id",
@@ -2054,7 +2046,7 @@ app.get("/edit/:table/:id", async (req, res) => {
                     "er.event_registration_id"
                 )
                 .join("events as e", "er.event_id", "e.event_id")
-                .join("participants as p", "er.participant_id", "p.participant_id")
+                .join("users as p", "er.participant_id", "p.participant_id")
                 .where("s.survey_id", id)
                 .select(
                     "s.*",
@@ -2114,7 +2106,8 @@ app.post("/edit/:table/:id", async (req, res) => {
     const updatedData = req.body;
 
     const primaryKeyByTable = {
-        participants: "participant_id",
+        users: "participant_id",
+        participants: "participant_id", // backward compatibility
         milestones: "milestone_id",
         events: "event_id",
         survey_results: "survey_id",
@@ -2189,7 +2182,7 @@ app.get("/event_registrations", async (req, res) => {
 
         // Base query with joins
         let query = knex("event_registrations as er")
-            .join("participants as p", "er.participant_id", "p.participant_id")
+            .join("users as p", "er.participant_id", "p.participant_id")
             .join("events as e", "er.event_id", "e.event_id")
             .select(
                 "er.event_registration_id",
