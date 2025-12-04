@@ -235,8 +235,25 @@
                             <label class="form-label">Event Name <span class="required">*</span></label>
                             <select class="form-select" name="event_name" id="eventSelect" required>
                             <option value="">Select an Event</option>
-                            <% events.forEach(e => { %>
-                                <option value="<%= e.event_name %>"><%= e.event_name %></option>
+                            <% 
+                                const seenEventNames = new Set();
+                                const cleanedEventNames = [];
+
+                                events.forEach(ev => {
+                                    const cleanedName = (ev.event_name || "")
+                                        .replace(/[{}"]/g, "")              // strip postgres array braces/quotes
+                                        .split(",")
+                                        .map(part => part.trim())
+                                        .filter(Boolean)[0] || ev.event_name;
+
+                                    if (!seenEventNames.has(cleanedName)) {
+                                        seenEventNames.add(cleanedName);
+                                        cleanedEventNames.push(cleanedName);
+                                    }
+                                });
+                            %>
+                            <% cleanedEventNames.forEach(name => { %>
+                                <option value="<%= name %>"><%= name %></option>
                             <% }) %>
                         </select>
 
