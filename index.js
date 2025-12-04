@@ -156,25 +156,23 @@ app.get("/logout", (req, res) => {
     });
 });
 
-// SIGN UP PAGE: 
+// SIGN UP PAGE:
 app.get("/signup", (req, res) => {
     res.render("signup");
 });
 // SIGNUP + AUTO-LOGIN
-app.post('/signup', async (req, res) => {
+app.post("/signup", async (req, res) => {
     try {
         const newData = req.body;
 
         // Insert new participant and get the full row back
-        const [user] = await knex("participants")
-            .insert(newData)
-            .returning("*");  // returns the inserted row in PostgreSQL
+        const [user] = await knex("participants").insert(newData).returning("*"); // returns the inserted row in PostgreSQL
 
         // Auto-login: set up the same session structure as in /login
         req.session.user = {
             id: user.participant_id,
             username: user.participant_username,
-            role: user.participant_role,   // make sure this column exists
+            role: user.participant_role, // make sure this column exists
         };
         req.session.isLoggedIn = true;
 
@@ -185,7 +183,6 @@ app.post('/signup', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-
 
 // LANGUAGE BOXES:
 app.post("/set-language", (req, res) => {
@@ -933,6 +930,7 @@ app.get("/participants", async (req, res) => {
             const term = searchValue.trim();
             if (term) {
                 if (searchColumn === "full_name") {
+                    // for full name, do this:
                     // Split "Jane Doe Smith" into parts
                     const parts = term.split(/\s+/);
 
@@ -940,8 +938,11 @@ app.get("/participants", async (req, res) => {
                         // One word: search first OR last name
                         const likeOne = `%${parts[0]}%`;
                         query.where(function () {
-                            this.where("participant_first_name", "ilike", likeOne)
-                                .orWhere("participant_last_name", "ilike", likeOne);
+                            this.where("participant_first_name", "ilike", likeOne).orWhere(
+                                "participant_last_name",
+                                "ilike",
+                                likeOne
+                            );
                         });
                     } else {
                         // Multiple words: use first piece as first name, last piece as last name
@@ -949,8 +950,11 @@ app.get("/participants", async (req, res) => {
                         const lastLike = `%${parts[parts.length - 1]}%`;
 
                         query.where(function () {
-                            this.where("participant_first_name", "ilike", firstLike)
-                                .andWhere("participant_last_name", "ilike", lastLike);
+                            this.where("participant_first_name", "ilike", firstLike).andWhere(
+                                "participant_last_name",
+                                "ilike",
+                                lastLike
+                            );
                         });
                     }
                 } else {
