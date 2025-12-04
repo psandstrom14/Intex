@@ -78,7 +78,7 @@
                 <div class="table-actions">
                     <% if (isLoggedIn && role && role.toLowerCase() === 'admin') { %>
                         <button class="btn btn-add">
-                            <a href="/add/surveys">+ Add Survey</a>
+                            <a href="/add/survey_results">+ Add Survey</a>
                         </button>
                     <% } %>
                 </div>
@@ -91,8 +91,8 @@
                         <!-- Search Dropdown -->
                         <div class="filter-item filter-column">
                             <select name="searchColumn" id="searchColumn" class="form-control">
-                                <option value="full_name" <%= filters.searchColumn === 'full_name' ? 'selected' : '' %>>Full Name</option>
-                                <option value="participant_first_name" <%= (filters.searchColumn === 'participant_first_name') ? 'selected' : (!filters.searchColumn ? 'selected' : '') %>>First Name</option>
+                                <option value="full_name" <%= (filters.searchColumn === 'full_name' || !filters.searchColumn) ? 'selected' : '' %>>Full Name</option>
+                                <option value="participant_first_name" <%= filters.searchColumn === 'participant_first_name' ? 'selected' : '' %>>First Name</option>
                                 <option value="participant_last_name" <%= filters.searchColumn === 'participant_last_name' ? 'selected' : '' %>>Last Name</option>
                                 <option value="event_name" <%= filters.searchColumn === 'event_name' ? 'selected' : '' %>>Event Name</option>
                                 <option value="event_date" <%= filters.searchColumn === 'event_date' ? 'selected' : '' %>>Event Date</option>
@@ -663,7 +663,7 @@
             const checkedBox = document.querySelector('.row-checkbox:checked');
             if (checkedBox) {
                 const surveyId = checkedBox.value;
-                window.location.href = '/surveys/edit/' + surveyId;
+                window.location.href = '/edit/survey_results/' + surveyId;
             }
         });
 
@@ -687,34 +687,42 @@
                 finalMessage = `${count} surveys deleted`;
             }
             
-            showDeleteConfirmation(confirmMessage, function() {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '/delete-multiple';
+            showDeleteConfirmation(confirmMessage, async function() {
+                const table = 'survey_results'; // hardcoded per page
 
-                // table name (logical name; backend maps "surveys" -> "survey_results")
-                const tableInput = document.createElement('input');
-                tableInput.type = 'hidden';
-                tableInput.name = 'table';
-                tableInput.value = 'surveys';
-                form.appendChild(tableInput);
+                try {
+                    // Call /delete/:table/:id for each selected id
+                    const deleteUrl = '/delete/' + table + '/';
+                    const responses = await Promise.all(
+                        ids.map(id =>
+                            fetch(deleteUrl + id, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
+                                },
+                                body: JSON.stringify({}) // body not used by route, can be empty
+                            })
+                        )
+                    );
 
-                // IDs being deleted
-                const idsInput = document.createElement('input');
-                idsInput.type = 'hidden';
-                idsInput.name = 'ids';
-                idsInput.value = JSON.stringify(ids);
-                form.appendChild(idsInput);
+                    const allOk = responses.every(r => r.ok);
 
-                // Human-friendly message to show after redirect
-                const msgInput = document.createElement('input');
-                msgInput.type = 'hidden';
-                msgInput.name = 'message';
-                msgInput.value = finalMessage;
-                form.appendChild(msgInput);
+                    if (!allOk) {
+                        console.error('Some delete requests failed:', responses);
+                        alert('Some surveys could not be deleted. Please check the console for details.');
+                        return;
+                    }
 
-                document.body.appendChild(form);
-                form.submit();
+                    const message = encodeURIComponent(finalMessage);
+                    const messageType = 'success';
+
+                    window.location.href = '/surveys?message=' + message + '&messageType=' + messageType;
+
+                } catch (err) {
+                    console.error('Error deleting surveys:', err);
+                    alert('There was an error deleting surveys. Please try again.');
+                }
             });
         });
 

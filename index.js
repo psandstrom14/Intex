@@ -1086,13 +1086,16 @@ app.get("/surveys", async (req, res) => {
     } = req.query;
 
     // defaults
-    // allow "full_name" as a special case; otherwise enforce SURVEY_SEARCHABLE_COLUMNS
+    // Default to "full_name" if no searchColumn provided
+    if (!searchColumn) {
+      searchColumn = "full_name";
+    }
+    // Validate that the provided searchColumn is in the allowed list
     if (
-      !searchColumn ||
-      (searchColumn !== "full_name" &&
-        !SURVEY_SEARCHABLE_COLUMNS.includes(searchColumn))
+      searchColumn !== "full_name" &&
+      !SURVEY_SEARCHABLE_COLUMNS.includes(searchColumn)
     ) {
-      searchColumn = "participant_first_name";
+      searchColumn = "full_name";
     }
 
     sortOrder = sortOrder === "desc" ? "desc" : "asc";
@@ -1324,7 +1327,6 @@ app.get("/add/:table", async (req, res) => {
   res.render("add", { table_name, events, event_types, pass_id: null });
 });
 
-
 // Route that will display an "Add entry" form with user id filled out (called from the profile pages)
 app.get("/add/:table/:id", async (req, res) => {
   const table_name = req.params.table;
@@ -1360,7 +1362,6 @@ app.get("/add/:table/:id", async (req, res) => {
   res.render("add", { table_name, events, event_types, pass_id });
 });
 
-
 // Route that adds the form inputs to the databases
 app.post("/add/:table", async (req, res) => {
   const table_name = req.params.table;
@@ -1374,7 +1375,12 @@ app.post("/add/:table", async (req, res) => {
     req.session.flashType = "success";
 
     // Redirect without passing options object
-    res.redirect(`/${table_name}`);
+    // Special case: survey_results should redirect to /surveys
+    if (table_name === "survey_results") {
+      res.redirect("/surveys");
+    } else {
+      res.redirect(`/${table_name}`);
+    }
   } catch (err) {
     console.log("Error adding record:", err.message);
 
@@ -1414,74 +1420,71 @@ app.post("/delete/:table/:id", async (req, res) => {
 // EDIT FUNCTIONALITY
 // route to display the "edit ____" page
 app.get("/edit/:table/:id", async (req, res) => {
-    const table_name = req.params.table;
-    const id = req.params.id;
+  const table_name = req.params.table;
+  const id = req.params.id;
 
-    const primaryKeyByTable = {
-        participants: "participant_id",
-        milestones: "milestone_id",
-        events: "event_id",
-        survey_results: "survey_id",
-        donations: "donation_id",
-        event_registration: "event_registration_id"
-    };
+  const primaryKeyByTable = {
+    participants: "participant_id",
+    milestones: "milestone_id",
+    events: "event_id",
+    survey_results: "survey_id",
+    donations: "donation_id",
+    event_registration: "event_registration_id",
+  };
 
-    const primaryKey = primaryKeyByTable[table_name];
+  const primaryKey = primaryKeyByTable[table_name];
 
-    try {
-        const info = await knex(table_name).where(primaryKey, id).first();
+  try {
+    const info = await knex(table_name).where(primaryKey, id).first();
 
-        let events = [];
-        if (
-            table_name === "event_registration" || 
-            table_name === "survey_results" || 
-            table_name === "events"
-        ) {
-            events = await knex("events")
-                .select(
-                    "event_id",
-                    "event_name",
-                    "event_date",
-                    "event_start_time",
-                    "event_end_time"
-                )
-                .orderBy(["event_name", "event_date", "event_start_time"]);
-        }
-
-        res.render("edit", { table_name, info, id, events, event_types });
-
-
-    } catch (err) {
-        console.error("Error fetching entry:", err.message);
-        res.status(500).redirect(`/${table_name}`, {
-            message: "Unable to edit",
-            messageType: "warning",
-        });
+    let events = [];
+    if (
+      table_name === "event_registration" ||
+      table_name === "survey_results" ||
+      table_name === "events"
+    ) {
+      events = await knex("events")
+        .select(
+          "event_id",
+          "event_name",
+          "event_date",
+          "event_start_time",
+          "event_end_time"
+        )
+        .orderBy(["event_name", "event_date", "event_start_time"]);
     }
-});
 
+    res.render("edit", { table_name, info, id, events, event_types });
+  } catch (err) {
+    console.error("Error fetching entry:", err.message);
+    res.status(500).redirect(`/${table_name}`, {
+      message: "Unable to edit",
+      messageType: "warning",
+    });
+  }
+});
 
 // Route that updates the "entry" to the databases
 app.get("/edit/:table/:id", async (req, res) => {
-    const table_name = req.params.table;
-    const id = req.params.id;
+  const table_name = req.params.table;
+  const id = req.params.id;
 
-    const primaryKeyByTable = {
-        participants: "participant_id",
-        milestones: "milestone_id",
-        events: "event_id",
-        survey_results: "survey_id",
-        donations: "donation_id",
-        event_registration: "event_registration_id"
-    };
+  const primaryKeyByTable = {
+    participants: "participant_id",
+    milestones: "milestone_id",
+    events: "event_id",
+    survey_results: "survey_id",
+    donations: "donation_id",
+    event_registration: "event_registration_id",
+  };
 
-    const primaryKey = primaryKeyByTable[table_name];
+  const primaryKey = primaryKeyByTable[table_name];
 
-    try {
-        const info = await knex(table_name).where(primaryKey, id).first();
+  try {
+    const info = await knex(table_name).where(primaryKey, id).first();
 
-        let events = [];
-        let event_types = [];
+    let events = [];
+    let event_types = [];
 
         if (table_name === "events") {
             event_types = await knex("event_types")
@@ -1505,8 +1508,29 @@ app.get("/edit/:table/:id", async (req, res) => {
         console.error("Error fetching entry:", err.message);
         res.status(500).redirect(`/${table_name}`);
     }
-});
 
+    if (
+      table_name === "event_registration" ||
+      table_name === "survey_results" ||
+      table_name === "events"
+    ) {
+      events = await knex("events")
+        .select(
+          "event_id",
+          "event_name",
+          "event_date",
+          "event_start_time",
+          "event_end_time"
+        )
+        .orderBy(["event_name", "event_date", "event_start_time"]);
+    }
+
+    res.render("edit", { table_name, info, id, events, event_types });
+  } catch (err) {
+    console.error("Error fetching entry:", err.message);
+    res.status(500).redirect(`/${table_name}`);
+  }
+});
 
 // START TO LISTEN (& tell command line)
 app.listen(port, () => console.log("the server has started to listen"));

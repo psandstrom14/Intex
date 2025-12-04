@@ -803,18 +803,6 @@ thead {
   background: white;
 }
 
-th {
-  padding: 1.2rem;
-  text-align: left;
-  font-weight: 600;
-  color: var(--text-medium);
-  border-bottom: 2px solid var(--border-color);
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  background-color: #d5e1e8;
-}
-
 .sortable {
   cursor: pointer;
   user-select: none;
@@ -904,6 +892,7 @@ th {
   letter-spacing: 0.5px;
   background-color: #d5e1e8;
   white-space: nowrap; /* Prevent text wrapping in headers */
+  text-align: center;
 }
 
 /* Table cells: will wrap text if column shrinks below header width */
