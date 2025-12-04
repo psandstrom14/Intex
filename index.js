@@ -1443,75 +1443,12 @@ app.get("/edit/:table/:id", async (req, res) => {
     const info = await knex(table_name).where(primaryKey, id).first();
 
     let events = [];
-    if (
-      table_name === "event_registration" ||
-      table_name === "survey_results" ||
-      table_name === "events"
-    ) {
-      events = await knex("events")
-        .select(
-          "event_id",
-          "event_name",
-          "event_date",
-          "event_start_time",
-          "event_end_time"
-        )
-        .orderBy(["event_name", "event_date", "event_start_time"]);
-    }
-
-    res.render("edit", { table_name, info, id, events, event_types });
-  } catch (err) {
-    console.error("Error fetching entry:", err.message);
-    res.status(500).redirect(`/${table_name}`, {
-      message: "Unable to edit",
-      messageType: "warning",
-    });
-  }
-});
-
-// Route that updates the "entry" to the databases
-app.get("/edit/:table/:id", async (req, res) => {
-  const table_name = req.params.table;
-  const id = req.params.id;
-
-  const primaryKeyByTable = {
-    participants: "participant_id",
-    milestones: "milestone_id",
-    events: "event_id",
-    survey_results: "survey_id",
-    donations: "donation_id",
-    event_registration: "event_registration_id",
-  };
-
-  const primaryKey = primaryKeyByTable[table_name];
-
-  try {
-    const info = await knex(table_name).where(primaryKey, id).first();
-
-    let events = [];
     let event_types = [];
 
-        if (table_name === "events") {
-            event_types = await knex("event_types")
-                .select("event_type_id", "event_name")
-                .orderBy("event_name");
-        }
-
-        if (
-            table_name === "event_registration" ||
-            table_name === "survey_results" ||
-            table_name === "events"
-        ) {
-            events = await knex("events")
-                .select("event_id", "event_name", "event_date", "event_start_time", "event_end_time")
-                .orderBy(["event_name", "event_date", "event_start_time"]);
-        }
-
-        res.render("edit", { table_name, info, id, events, event_types });
-
-    } catch (err) {
-        console.error("Error fetching entry:", err.message);
-        res.status(500).redirect(`/${table_name}`);
+    if (table_name === "events") {
+      event_types = await knex("event_types")
+        .select("event_type_id", "event_type_name")
+        .orderBy("event_type_name");
     }
 
     if (
@@ -1533,7 +1470,10 @@ app.get("/edit/:table/:id", async (req, res) => {
     res.render("edit", { table_name, info, id, events, event_types });
   } catch (err) {
     console.error("Error fetching entry:", err.message);
-    res.status(500).redirect(`/${table_name}`);
+    // Special case: survey_results should redirect to /surveys
+    const redirectPath =
+      table_name === "survey_results" ? "/surveys" : `/${table_name}`;
+    res.redirect(redirectPath);
   }
 });
 
