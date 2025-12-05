@@ -756,65 +756,66 @@
         });
 
         // Delete Selected (bulk)
-        document.getElementById('deleteSelected').addEventListener('click', function() {
-            const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
-            const ids = Array.from(checkedBoxes).map(cb => cb.value);
-            const count = ids.length;
+        if (document.getElementById('deleteSelected')) {
+            document.getElementById('deleteSelected').addEventListener('click', function() {
+                const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+                const ids = Array.from(checkedBoxes).map(cb => cb.value);
+                const count = ids.length;
 
-            if (count === 0) return;
+                if (count === 0) return;
 
-            let confirmMessage;
-            let finalMessage;
+                let confirmMessage;
+                let finalMessage;
 
-            // Create messages to ask users if they would like to delete (if it is more than one just say number of participants)
-            if (count === 1) {
-                const name = checkedBoxes[0].getAttribute('data-name');
-                confirmMessage = `Are you sure you want to delete ${name}?`;
-                finalMessage = `${name} deleted`;
-            } else {
-                confirmMessage = `Are you sure you want to delete ${count} participants?`;
-                finalMessage = `${count} participants deleted`;
-            }
-
-            showDeleteConfirmation(confirmMessage, async function() {
-                const table = 'users'; // hardcoded per page
-
-                try {
-                    // Call /delete/:table/:id for each selected id
-                    const deleteUrl = '/delete/' + table + '/';
-                    const responses = await Promise.all(
-                        ids.map(id =>
-                            fetch(deleteUrl + id, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Accept': 'application/json'
-                                },
-                                body: JSON.stringify({}) // body not used by route, can be empty
-                            })
-                        )
-                    );
-
-                    const allOk = responses.every(r => r.ok);
-
-                    if (!allOk) {
-                        console.error('Some delete requests failed:', responses);
-                        alert('Some participants could not be deleted. Please check the console for details.');
-                        return;
-                    }
-
-                    const message = encodeURIComponent(finalMessage);
-                    const messageType = 'success';
-
-                    window.location.href = '/users?message=' + message + '&messageType=' + messageType;
-
-                } catch (err) {
-                    console.error('Error deleting participants:', err);
-                    alert('There was an error deleting participants. Please try again.');
+                // Create messages to ask users if they would like to delete
+                if (count === 1) {
+                    const name = checkedBoxes[0].getAttribute('data-name');
+                    confirmMessage = `Are you sure you want to delete ${name}?`;
+                    finalMessage = `${name} deleted`;
+                } else {
+                    confirmMessage = `Are you sure you want to delete ${count} events?`;
+                    finalMessage = `${count} events deleted`;
                 }
-            });
-        });
 
+                showDeleteConfirmation(confirmMessage, async function() {
+                    const table = 'events'; // hardcoded per page
+
+                    try {
+                        // Call /delete/:table/:id for each selected id
+                        const responses = await Promise.all(
+                            ids.map(id =>
+                                fetch(`/delete/${table}/${id}`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Accept': 'application/json'
+                                    },
+                                    body: JSON.stringify({}) // body not used by route, can be empty
+                                })
+                            )
+                        );
+
+                        const allOk = responses.every(r => r.ok);
+
+                        if (!allOk) {
+                            console.error('Some delete requests failed:', responses);
+                            alert('Some events could not be deleted. Please check the console for details.');
+                            return;
+                        }
+
+                        const message = encodeURIComponent(finalMessage);
+                        const messageType = 'success';
+
+                        window.location.href = `/events?message=${message}&messageType=${messageType}`;
+
+
+                    } catch (err) {
+                        console.error('Error deleting events:', err);
+                        alert('There was an error deleting events. Please try again.');
+                    }
+                });
+            });
+        }
 
         // Delete confirmation modal
         function showDeleteConfirmation(message, onConfirm) {
