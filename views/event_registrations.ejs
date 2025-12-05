@@ -294,7 +294,7 @@
                             <% } %>
                             <th class="sortable" data-column="participant_first_name" style="min-width: 120px; width: auto; white-space: normal; padding: 0.8rem 0.6rem;">First Name <span class="sort-icon">⇅</span></th>
                             <th class="sortable" data-column="participant_last_name" style="min-width: 120px; width: auto; white-space: normal; padding: 0.8rem 0.6rem;">Last Name <span class="sort-icon">⇅</span></th>
-                            <th class="sortable" data-column="event_name" style="min-width: 180px; width: auto; white-space: normal; padding: 0.8rem 0.6rem; text-align: center;">Event Name <span class="sort-icon">⇅</span></th>
+                            <th class="sortable" data-column="event_name" style="min-width: 180px; width: auto; white-space: normal; padding: 0.8rem 0.6rem; text-align: center !important;">Event Name <span class="sort-icon">⇅</span></th>
                             <th class="sortable" data-column="event_date" style="min-width: 90px; width: auto; white-space: normal; padding: 0.8rem 0.6rem;">Event Date <span class="sort-icon">⇅</span></th>
                             <th class="sortable" data-column="registration_status" style="min-width: 120px; width: auto; white-space: normal; padding: 0.8rem 0.6rem;">Registration Status <span class="sort-icon">⇅</span></th>
                             <th class="sortable" data-column="registration_attended_flag" style="min-width: 100px; width: auto; white-space: normal; padding: 0.8rem 0.6rem;">Attended <span class="sort-icon">⇅</span></th>
@@ -331,7 +331,7 @@
                                     <% } %>
                                     <td style="max-width: none; min-width: 120px; padding: 0.8rem 0.6rem;"><a href="/profile/<%= er.user_id %>" style="color: var(--primary); text-decoration: underline; font-weight: 600;"><%= er.participant_first_name %></a></td>
                                     <td style="max-width: none; min-width: 120px; padding: 0.8rem 0.6rem;"><a href="/profile/<%= er.user_id %>" style="color: var(--primary); text-decoration: underline; font-weight: 600;"><%= er.participant_last_name %></a></td>
-                                    <td style="max-width: none; min-width: 180px; padding: 0.8rem 0.6rem; text-align: center;"><%= er.event_name %></td>
+                                    <td style="text-align: center; max-width: none; min-width: 180px; padding: 0.8rem 0.6rem;"><%= er.event_name %></td>
                                     <td style="max-width: none; min-width: 90px; padding: 0.8rem 0.6rem;"><%= formattedEventDate %></td>
                                     <td style="max-width: none; min-width: 120px; padding: 0.8rem 0.6rem;"><%= er.registration_status %></td>
                                     <td style="max-width: none; min-width: 100px; padding: 0.8rem 0.6rem;"><%= attendedText %></td>
