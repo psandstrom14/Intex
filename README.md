@@ -1,6 +1,13 @@
 # Intex
+
 <h1>Links</h1>
-https://ellarises-2-14.is404.net/
+<ul>
+  <li><a href="https://ellarises-2-14.is404.net/">Website</a></li>
+  <li><a href="https://www.canva.com/design/DAG6GvbVeoo/jnyXQWg39bAId9zxJS2MqA/edit?utm_content=DAG6GvbVeoo&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton">Slides</a></li>
+  <li><a href="https://public.tableau.com/views/Book_17649096419640/Dashboard?:language=en-US&publish[…]sid=&:redirect=auth&:display_count=n&:origin=viz_share_link"></a>Tableau</li>
+  <li><a href=""></a>Google Collab</li>
+  
+</ul>
 
 <p>Admin</p>
 <ul>
