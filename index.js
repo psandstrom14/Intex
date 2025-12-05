@@ -3048,7 +3048,7 @@ app.post("/edit/:table/:id", requireAdmin, async (req, res) => {
         // If event_id/user_id aren't provided, preserve the existing event_registration_id
         surveyFields.event_registration_id =
           existingSurvey.event_registration_id;
-      }
+      } 
 
       // Only update valid survey_results columns
       const validColumns = [

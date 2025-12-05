@@ -719,12 +719,12 @@
             if (count > 0) {
                 bulkActionsBar.style.display = 'block';
                 selectedCountSpan.textContent = count + ' selected';
-                viewButton.style.display = count === 1 ? 'inline-block' : 'none';
-                editButton.style.display = count === 1 ? 'inline-block' : 'none';
+                if (viewButton) viewButton.style.display = count === 1 ? 'inline-block' : 'none';
+                if (editButton) editButton.style.display = count === 1 ? 'inline-block' : 'none';
             } else {
                 bulkActionsBar.style.display = 'none';
-                viewButton.style.display = 'none';
-                editButton.style.display = 'none';
+                if (viewButton) viewButton.style.display = 'none';
+                if (editButton) editButton.style.display = 'none';
             }
 
             const rowCheckboxes = document.querySelectorAll('.row-checkbox');
@@ -738,22 +738,26 @@
         });
 
         // View Selected (single) - navigates to /profile/:id
-        document.getElementById('viewSelected').addEventListener('click', function() {
-            const checkedBox = document.querySelector('.row-checkbox:checked');
-            if (checkedBox) {
-                const participantId = checkedBox.value;
-                window.location.href = '/profile/' + participantId;
-            }
-        });
+        if (viewButton) {
+            viewButton.addEventListener('click', function() {
+                const checkedBox = document.querySelector('.row-checkbox:checked');
+                if (checkedBox) {
+                    const participantId = checkedBox.value;
+                    window.location.href = '/profile/' + participantId;
+                }
+            });
+        }
 
         // Edit Selected (single)
-        document.getElementById('editSelected').addEventListener('click', function() {
-            const checkedBox = document.querySelector('.row-checkbox:checked');
-            if (checkedBox) {
-                const participantId = checkedBox.value;
-                window.location.href = '/edit/users/' + participantId;
-            }
-        });
+        if (editButton) {
+            editButton.addEventListener('click', function() {
+                const checkedBox = document.querySelector('.row-checkbox:checked');
+                if (checkedBox) {
+                    const participantId = checkedBox.value;
+                    window.location.href = '/edit/users/' + participantId;
+                }
+            });
+        }
 
         // Delete Selected (bulk)
         if (document.getElementById('deleteSelected')) {
