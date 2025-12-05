@@ -80,7 +80,8 @@ app.use((req, res, next) => {
     req.path === "/login" ||
     req.path === "/logout" ||
     req.path === "/signup" ||
-    req.path === "/set-language"
+    req.path === "/set-language" ||
+    req.path === "/teapot"
   ) {
     //continue with the request path
     return next();
