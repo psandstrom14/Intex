@@ -2396,54 +2396,57 @@ app.get("/profile-add/milestones/:userId", async (req, res) => {
 });
 
 // Participant-facing route to add their own survey results (requires registration)
-app.get("/profile-add/survey_results/:eventRegistrationId", async (req, res) => {
-  const eventRegistrationId = parseInt(req.params.eventRegistrationId, 10);
-  if (!Number.isInteger(eventRegistrationId)) {
-    return res.status(400).send("Invalid event registration id.");
+app.get(
+  "/profile-add/survey_results/:eventRegistrationId",
+  async (req, res) => {
+    const eventRegistrationId = parseInt(req.params.eventRegistrationId, 10);
+    if (!Number.isInteger(eventRegistrationId)) {
+      return res.status(400).send("Invalid event registration id.");
+    }
+
+    const registration = await knex("event_registrations as er")
+      .join("events as e", "er.event_id", "e.event_id")
+      .where("er.event_registration_id", eventRegistrationId)
+      .select(
+        "er.event_registration_id",
+        "er.user_id",
+        "er.event_id",
+        "e.event_name",
+        "e.event_date",
+        "e.event_start_time",
+        "e.event_end_time"
+      )
+      .first();
+
+    if (!registration) {
+      return res.status(404).send("Event registration not found.");
+    }
+
+    if (!requireSelfOrAdmin(req, res, registration.user_id)) return;
+
+    const events = [
+      {
+        event_id: registration.event_id,
+        event_name: registration.event_name,
+        event_date: registration.event_date,
+        event_start_time: registration.event_start_time,
+        event_end_time: registration.event_end_time,
+      },
+    ];
+
+    res.render("add", {
+      table_name: "survey_results",
+      events,
+      event_types: [],
+      pass_id: registration.user_id,
+      survey_prefill: {
+        event_registration_id: registration.event_registration_id,
+        event_id: registration.event_id,
+        event_name: registration.event_name,
+      },
+    });
   }
-
-  const registration = await knex("event_registrations as er")
-    .join("events as e", "er.event_id", "e.event_id")
-    .where("er.event_registration_id", eventRegistrationId)
-    .select(
-      "er.event_registration_id",
-      "er.user_id",
-      "er.event_id",
-      "e.event_name",
-      "e.event_date",
-      "e.event_start_time",
-      "e.event_end_time"
-    )
-    .first();
-
-  if (!registration) {
-    return res.status(404).send("Event registration not found.");
-  }
-
-  if (!requireSelfOrAdmin(req, res, registration.user_id)) return;
-
-  const events = [
-    {
-      event_id: registration.event_id,
-      event_name: registration.event_name,
-      event_date: registration.event_date,
-      event_start_time: registration.event_start_time,
-      event_end_time: registration.event_end_time,
-    },
-  ];
-
-  res.render("add", {
-    table_name: "survey_results",
-    events,
-    event_types: [],
-    pass_id: registration.user_id,
-    survey_prefill: {
-      event_registration_id: registration.event_registration_id,
-      event_id: registration.event_id,
-      event_name: registration.event_name,
-    },
-  });
-});
+);
 
 // Route that adds the form inputs to the databases
 app.post("/add/:table", requireAdmin, async (req, res) => {
@@ -2520,37 +2523,25 @@ app.post("/profile-add/milestones/:userId", async (req, res) => {
 });
 
 // Participant-facing route to submit their own survey results (requires registration id)
-app.post("/profile-add/survey_results/:eventRegistrationId", async (req, res) => {
-  const eventRegistrationId = parseInt(req.params.eventRegistrationId, 10);
-  if (!Number.isInteger(eventRegistrationId)) {
-    return res.status(400).send("Invalid event registration id.");
-  }
+app.post(
+  "/profile-add/survey_results/:eventRegistrationId",
+  async (req, res) => {
+    const eventRegistrationId = parseInt(req.params.eventRegistrationId, 10);
+    if (!Number.isInteger(eventRegistrationId)) {
+      return res.status(400).send("Invalid event registration id.");
+    }
 
-  const registration = await knex("event_registrations")
-    .where("event_registration_id", eventRegistrationId)
-    .first();
+    const registration = await knex("event_registrations")
+      .where("event_registration_id", eventRegistrationId)
+      .first();
 
-  if (!registration) {
-    return res.status(404).send("Event registration not found.");
-  }
+    if (!registration) {
+      return res.status(404).send("Event registration not found.");
+    }
 
-  if (!requireSelfOrAdmin(req, res, registration.user_id)) return;
+    if (!requireSelfOrAdmin(req, res, registration.user_id)) return;
 
-  const {
-    survey_satisfaction_score,
-    survey_usefulness_score,
-    survey_instructor_score,
-    survey_recommendation_score,
-    survey_overall_score,
-    survey_nps_bucket,
-    survey_comments,
-  } = req.body;
-
-  const { date, time } = nowDate();
-
-  try {
-    await knex("survey_results").insert({
-      event_registration_id: eventRegistrationId,
+    const {
       survey_satisfaction_score,
       survey_usefulness_score,
       survey_instructor_score,
@@ -2558,20 +2549,35 @@ app.post("/profile-add/survey_results/:eventRegistrationId", async (req, res) =>
       survey_overall_score,
       survey_nps_bucket,
       survey_comments,
-      submission_date: date,
-      submission_time: time,
-    });
+    } = req.body;
 
-    req.session.flashMessage = "Survey submitted!";
-    req.session.flashType = "success";
-    res.redirect(`/profile/${registration.user_id}?tab=surveys`);
-  } catch (err) {
-    console.error("Error adding survey result:", err);
-    req.session.flashMessage = "Error adding survey result: " + err.message;
-    req.session.flashType = "danger";
-    res.redirect(`/profile/${registration.user_id}?tab=surveys`);
+    const { date, time } = nowDate();
+
+    try {
+      await knex("survey_results").insert({
+        event_registration_id: eventRegistrationId,
+        survey_satisfaction_score,
+        survey_usefulness_score,
+        survey_instructor_score,
+        survey_recommendation_score,
+        survey_overall_score,
+        survey_nps_bucket,
+        survey_comments,
+        submission_date: date,
+        submission_time: time,
+      });
+
+      req.session.flashMessage = "Survey submitted!";
+      req.session.flashType = "success";
+      res.redirect(`/profile/${registration.user_id}?tab=surveys`);
+    } catch (err) {
+      console.error("Error adding survey result:", err);
+      req.session.flashMessage = "Error adding survey result: " + err.message;
+      req.session.flashType = "danger";
+      res.redirect(`/profile/${registration.user_id}?tab=surveys`);
+    }
   }
-});
+);
 
 // DELETE FUNCTIONALITY:
 // route that occurs when delete button is pressed
@@ -2653,6 +2659,18 @@ app.get("/edit/:table/:id", requireAdmin, async (req, res) => {
       info = await knex(table_name).where(primaryKey, id).first();
     }
 
+    if (!info) {
+      req.session.flashMessage = "Entry not found.";
+      req.session.flashType = "danger";
+      const redirectPath =
+        table_name === "survey_results"
+          ? "/surveys"
+          : table_name === "event_registrations"
+          ? "/event_registrations"
+          : `/${table_name}`;
+      return res.redirect(redirectPath);
+    }
+
     let events = [];
     let event_types = [];
 
@@ -2691,6 +2709,8 @@ app.get("/edit/:table/:id", requireAdmin, async (req, res) => {
     });
   } catch (err) {
     console.error("Error fetching entry:", err.message);
+    req.session.flashMessage = "Error loading edit page: " + err.message;
+    req.session.flashType = "danger";
     // Special case: survey_results should redirect to /surveys
     const redirectPath =
       table_name === "survey_results"
