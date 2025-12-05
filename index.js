@@ -1042,6 +1042,10 @@ app.get("/profile-edit/:table/:id", async (req, res) => {
       events,
       event_types,
       fromProfile: true, // Flag to indicate this edit came from profile
+      isLoggedIn: req.session.isLoggedIn || false,
+      userId: req.session.user?.id || null,
+      role: req.session.user?.role || null,
+      language: req.session.language || "en",
     });
   } catch (err) {
     console.error("Error fetching entry:", err.message);
@@ -1553,7 +1557,11 @@ app.get("/events", requireAdmin, async (req, res) => {
         .map((m) => parseInt(m))
         .filter((m) => !isNaN(m));
       if (monthNums.length > 0) {
-        query.whereRaw("EXTRACT(MONTH FROM e.event_date) IN (?)", [monthNums]);
+        const placeholders = monthNums.map(() => "?").join(",");
+        query.whereRaw(
+          `EXTRACT(MONTH FROM e.event_date) IN (${placeholders})`,
+          monthNums
+        );
       }
     }
 
@@ -1563,7 +1571,11 @@ app.get("/events", requireAdmin, async (req, res) => {
       // Convert year strings to integers for comparison
       const yearNums = yearArr.map((y) => parseInt(y)).filter((y) => !isNaN(y));
       if (yearNums.length > 0) {
-        query.whereRaw("EXTRACT(YEAR FROM e.event_date) IN (?)", [yearNums]);
+        const placeholders = yearNums.map(() => "?").join(",");
+        query.whereRaw(
+          `EXTRACT(YEAR FROM e.event_date) IN (${placeholders})`,
+          yearNums
+        );
       }
     }
 
@@ -2465,7 +2477,17 @@ app.get("/edit/:table/:id", requireAdmin, async (req, res) => {
         .orderBy(["event_name", "event_date", "event_start_time"]);
     }
 
-    res.render("edit", { table_name, info, id, events, event_types });
+    res.render("edit", {
+      table_name,
+      info,
+      id,
+      events,
+      event_types,
+      isLoggedIn: req.session.isLoggedIn || false,
+      userId: req.session.user?.id || null,
+      role: req.session.user?.role || null,
+      language: req.session.language || "en",
+    });
   } catch (err) {
     console.error("Error fetching entry:", err.message);
     // Special case: survey_results should redirect to /surveys
@@ -2643,7 +2665,11 @@ app.get("/event_registrations", requireAdmin, async (req, res) => {
         .map((m) => parseInt(m))
         .filter((m) => !isNaN(m));
       if (monthNums.length > 0) {
-        query.whereRaw("EXTRACT(MONTH FROM e.event_date) IN (?)", [monthNums]);
+        const placeholders = monthNums.map(() => "?").join(",");
+        query.whereRaw(
+          `EXTRACT(MONTH FROM e.event_date) IN (${placeholders})`,
+          monthNums
+        );
       }
     }
 
@@ -2652,7 +2678,11 @@ app.get("/event_registrations", requireAdmin, async (req, res) => {
     if (!yearArr.includes("all")) {
       const yearNums = yearArr.map((y) => parseInt(y)).filter((y) => !isNaN(y));
       if (yearNums.length > 0) {
-        query.whereRaw("EXTRACT(YEAR FROM e.event_date) IN (?)", [yearNums]);
+        const placeholders = yearNums.map(() => "?").join(",");
+        query.whereRaw(
+          `EXTRACT(YEAR FROM e.event_date) IN (${placeholders})`,
+          yearNums
+        );
       }
     }
 
