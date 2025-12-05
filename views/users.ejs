@@ -81,7 +81,7 @@
                 <div class="table-actions">
                     <% if (isLoggedIn && role && role.toLowerCase() === 'admin') { %>
                         <button class="btn btn-add">
-                            <a href="/add/participants">+ Add Participant</a>
+                            <a href="/add/users">+ Add Participant</a>
                         </button>
                     <% } %>
                 </div>
@@ -779,7 +779,7 @@
             const checkedBox = document.querySelector('.row-checkbox:checked');
             if (checkedBox) {
                 const participantId = checkedBox.value;
-                window.location.href = '/edit/participants/' + participantId;
+                window.location.href = '/edit/users/' + participantId;
             }
         });
 
