@@ -1161,23 +1161,26 @@ app.post("/profile-edit/:table/:id", async (req, res) => {
     req.session.flashMessage = "Updated Successfully!";
     req.session.flashType = "success";
 
-    // Always redirect back to profile with appropriate tab
-    const tabMap = {
-      users: "profile",
-      milestones: "milestones",
-      donations: "donations",
-      event_registrations: "events",
-      survey_results: "surveys",
-    };
-
-    const tab = tabMap[table_name] || "profile";
-    res.redirect(`/profile/${req.session.user.id}?tab=${tab}`);
+    // Special case: survey_results should redirect to /surveys
+    const redirectPath =
+      table_name === "survey_results"
+        ? "/surveys"
+        : table_name === "event_registrations"
+        ? "/event_registrations"
+        : `/${table_name}`;
+    res.redirect(redirectPath);
   } catch (err) {
     console.log("Error updating record:", err.message);
     req.session.flashMessage = "Error updating record: " + err.message;
     req.session.flashType = "danger";
 
-    res.redirect(`/profile/${req.session.user.id}?tab=profile`);
+    const redirectPath =
+      table_name === "survey_results"
+        ? "/surveys"
+        : table_name === "event_registrations"
+        ? "/event_registrations"
+        : `/${table_name}`;
+    res.redirect(redirectPath);
   }
 });
 
@@ -2773,7 +2776,7 @@ app.get("/edit/:table/:id", requireAdmin, async (req, res) => {
 app.post("/edit/:table/:id", requireAdmin, async (req, res) => {
   let table_name = req.params.table;
   const id = req.params.id;
-  const updatedData = req.body;
+  let updatedData = req.body;
 
   // Backward compatibility: map old "participants" to "users"
   if (table_name === "participants") {
@@ -2793,6 +2796,48 @@ app.post("/edit/:table/:id", requireAdmin, async (req, res) => {
   const primaryKey = primaryKeyByTable[table_name];
 
   try {
+    // Special handling for survey_results - filter out invalid columns and handle event_registration_id
+    if (table_name === "survey_results") {
+      const { user_id, event_id, event_name, ...surveyFields } = updatedData;
+
+      // If event_id and user_id are provided, find the corresponding event_registration_id
+      if (event_id && user_id) {
+        const registration = await knex("event_registrations")
+          .where({ event_id: parseInt(event_id), user_id: parseInt(user_id) })
+          .first();
+
+        if (registration) {
+          surveyFields.event_registration_id =
+            registration.event_registration_id;
+        } else {
+          throw new Error(
+            "No event registration found for the specified user and event"
+          );
+        }
+      }
+
+      // Only update valid survey_results columns
+      const validColumns = [
+        "event_registration_id",
+        "survey_satisfaction_score",
+        "survey_usefulness_score",
+        "survey_instructor_score",
+        "survey_recommendation_score",
+        "survey_overall_score",
+        "survey_nps_bucket",
+        "survey_comments",
+        "submission_date",
+        "submission_time",
+      ];
+
+      updatedData = {};
+      for (const key of validColumns) {
+        if (surveyFields[key] !== undefined) {
+          updatedData[key] = surveyFields[key];
+        }
+      }
+    }
+
     await knex(table_name).where(primaryKey, id).update(updatedData);
 
     req.session.flashMessage = "Updated Successfully!";
