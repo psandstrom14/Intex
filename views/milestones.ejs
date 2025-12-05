@@ -547,7 +547,6 @@
         const selectAllCheckbox = document.getElementById('selectAll');
         const bulkActionsBar = document.getElementById('bulkActionsBar');
         const selectedCountSpan = document.getElementById('selectedCount');
-        const viewButton = document.getElementById('viewSelected');
         const editButton = document.getElementById('editSelected');
 
         if (selectAllCheckbox) {
@@ -571,11 +570,9 @@
             if (count > 0 && bulkActionsBar) {
                 bulkActionsBar.style.display = 'block';
                 selectedCountSpan.textContent = count + ' selected';
-                if (viewButton) viewButton.style.display = count === 1 ? 'inline-block' : 'none';
                 if (editButton) editButton.style.display = count === 1 ? 'inline-block' : 'none';
             } else {
                 if (bulkActionsBar) bulkActionsBar.style.display = 'none';
-                if (viewButton) viewButton.style.display = 'none';
                 if (editButton) editButton.style.display = 'none';
             }
 
@@ -590,17 +587,6 @@
                 document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = false);
                 if (selectAllCheckbox) selectAllCheckbox.checked = false;
                 updateBulkActions();
-            });
-        }
-
-        // View Selected (single) - navigates to milestone detail page or edit
-        if (viewButton) {
-            viewButton.addEventListener('click', function() {
-                const checkedBox = document.querySelector('.row-checkbox:checked');
-                if (checkedBox) {
-                    const milestoneId = checkedBox.value;
-                    window.location.href = '/edit/milestones/' + milestoneId;
-                }
             });
         }
 
