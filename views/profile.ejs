@@ -97,7 +97,7 @@
         <button class="tab-btn" data-tab="milestones">Milestones</button>
         <% } %>
         <button class="tab-btn" data-tab="donations">Donations</button>
-        <% if (isLoggedIn && participant.participant_role && ['admin', 'donor', 'sponsor'].includes(participant.participant_role.toLowerCase())) { %>
+        <% if (isLoggedIn && participant.participant_role && participant.participant_role.toLowerCase() !== 'participant') { %>
         <button class="tab-btn" data-tab="impact">Impact</button>
         <% } %>
         <button class="tab-btn" data-tab="chatbot">Chatbot</button>
@@ -747,7 +747,7 @@
         </div>
       </div>
 
-      <% if (isLoggedIn && participant.participant_role && ['admin', 'donor', 'sponsor'].includes(participant.participant_role.toLowerCase())) { %>
+      <% if (isLoggedIn && participant.participant_role && participant.participant_role.toLowerCase() !== 'participant') { %>
         <!-- Impact Tab -->
         <div id="impact-tab" class="tab-content">
           <div class="table-container">
