@@ -2183,9 +2183,11 @@ app.get("/donations", requireAdmin, async (req, res) => {
         .map((m) => parseInt(m))
         .filter((m) => !isNaN(m));
       if (monthNums.length > 0) {
-        query.whereRaw("EXTRACT(MONTH FROM d.donation_date) IN (?)", [
-          monthNums,
-        ]);
+        const placeholders = monthNums.map(() => "?").join(",");
+        query.whereRaw(
+          `EXTRACT(MONTH FROM d.donation_date) IN (${placeholders})`,
+          monthNums
+        );
       }
     }
 
@@ -2194,7 +2196,11 @@ app.get("/donations", requireAdmin, async (req, res) => {
     if (!yearArr.includes("all")) {
       const yearNums = yearArr.map((y) => parseInt(y)).filter((y) => !isNaN(y));
       if (yearNums.length > 0) {
-        query.whereRaw("EXTRACT(YEAR FROM d.donation_date) IN (?)", [yearNums]);
+        const placeholders = yearNums.map(() => "?").join(",");
+        query.whereRaw(
+          `EXTRACT(YEAR FROM d.donation_date) IN (${placeholders})`,
+          yearNums
+        );
       }
     }
 
