@@ -1,5 +1,12 @@
-<!--Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom-->
-<!--This page will allow managers and users to log in to view the databases-->
+<!--
+    login.ejs - Login Page
+    Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom
+    
+    This is the login page where users sign in to access their accounts.
+    The form submits to /login (POST route in index.js) which checks credentials
+    and creates a session if valid. If there's an error (wrong password, etc.),
+    the server passes error_message which gets displayed here.
+-->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -14,6 +21,7 @@
     <!-- Skip Navigation Link -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
     
+    <!-- Standard navigation bar -->
 <nav>
       <div class="nav-container">
           <div class="logo">
@@ -63,7 +71,8 @@
       </div>
     </section>
 
-    <!-- Add error message display here -->
+    <!-- Error Message Display -->
+    <!-- If login fails, index.js passes error_message which gets shown here -->
     <% if (typeof error_message !== 'undefined' && error_message) { %>
     <div class="container login-error-container">
       <div class="alert alert-danger"><%= error_message %></div>
@@ -71,6 +80,7 @@
     <% } %>
 
     <!-- Login Form -->
+    <!-- Submits to POST /login route in index.js -->
     <main id="main-content">
     <div class="container">
       <div class="add-card compact">
@@ -110,6 +120,7 @@
             <button type="submit" class="btn btn-primary btn-block">
               Sign In
             </button>
+            <!-- Link to signup page for new users -->
             <a href="/signup" class="btn btn-secondary btn-block">
               Create New Account
             </a>

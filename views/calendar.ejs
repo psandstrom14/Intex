@@ -1,5 +1,17 @@
-<!--Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom-->
-<!--This page displays a calendar with upcoming events-->
+<!--
+    calendar.ejs - Event Calendar Page
+    Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom
+    
+    This page displays a 3-month calendar view of upcoming events. Anyone can view events,
+    but logged-in users can register for them. The server (index.js) builds the calendar
+    data structure with events organized by month and day, then this template renders it.
+    
+    Key features:
+    - Shows 3 months of events in a calendar grid
+    - Click events to see details and register (if logged in)
+    - Color-coded events based on registration status
+    - Modal popups for event details and registration
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,6 +25,7 @@
     <!-- Skip Navigation Link -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
     
+    <!-- Standard navigation - same as other pages -->
  <nav>
       <div class="nav-container">
           <div class="logo">
@@ -58,11 +71,13 @@
     <section class="hero hero-compact">
         <div class="hero-content">
             <h1>Event Calendar</h1>
+            <!-- Show different subtitle based on login status -->
             <p class="hero-subtitle">Click on an event below to learn more about the event details<%= isLoggedIn ? ' & to register for the event!' : '!' %></p>
         </div>
     </section>
 
-    <!-- Flash Messages -->
+    <!-- Flash Messages - Shows success/error messages from previous actions -->
+    <!-- These get set in the session by index.js and displayed here -->
     <% if (typeof message !== 'undefined' && message) { %>
         <div class="container" style="padding: 1rem 2rem 0;">
             <div class="alert alert-<%= messageType || 'info' %>">
@@ -71,7 +86,8 @@
         </div>
     <% } %>
 
-    <!-- Calendar Legend (only show if user is logged in) -->
+    <!-- Calendar Legend - Only show if user is logged in -->
+    <!-- Helps users understand the color coding for registered vs not registered events -->
     <% if (isLoggedIn) { %>
         <div class="calendar-legend">
             <span class="calendar-legend-title">Legend:</span>
@@ -479,21 +495,31 @@
     </footer>
 
 
+    <!-- 
+        Calendar JavaScript
+        This handles all the interactive features:
+        - Month navigation (prev/next buttons)
+        - Event click handlers (opens modal with event details)
+        - Registration/cancellation via AJAX
+        - Modal management (open/close)
+        - Google Calendar integration
+    -->
     <script>
-    // Wait for DOM to be fully loaded
+    // Wrap everything in an IIFE to avoid polluting global scope
     (function() {
         'use strict';
         
-        // Current month index
+        // Track which month is currently visible (0 = first month, 1 = second, etc.)
         let currentMonthIndex = 0;
         
-        // Store pending registration info
+        // Store info about registration being processed (so we can complete it after confirmation)
         let pendingRegistration = null;
         
-        // Store pending cancellation info
+        // Store info about cancellation being processed
         let pendingCancellation = null;
 
-        // Get total months and login status from data attributes
+        // Get configuration from data attributes set by the server
+        // The server tells us how many months to show and if user is logged in
         const calendarGrid = document.getElementById('calendarGrid');
         const totalMonths = parseInt(calendarGrid.getAttribute('data-total-months')) || 3;
         const isLoggedIn = calendarGrid.getAttribute('data-is-logged-in') === 'true';
@@ -504,11 +530,12 @@
             console.log('Total months:', totalMonths);
             console.log('User logged in:', isLoggedIn);
             
+            // Set up navigation buttons and all click handlers
             updateNavigationButtons();
             setupEventListeners();
         }
 
-        // Setup all event listeners
+        // Set up all the event listeners - this connects buttons and clicks to functions
         function setupEventListeners() {
             // Navigation buttons
             const prevBtn = document.getElementById('prevBtn');

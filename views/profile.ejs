@@ -1,7 +1,15 @@
-<!--profile pages (profile.ejs)-->
-<!--Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom-->
-<!--This page will display participant information-->
-<!--It will also display the participant milestones, donations, event registration, survey results-->
+<!--
+    profile.ejs - User Profile/Dashboard Page
+    Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom
+    
+    This is the main user dashboard page. It shows different content based on the user's role:
+    - Participants see: stats, milestones, donations, event registrations, surveys
+    - Admins/Sponsors see: organization-wide stats and impact data
+    
+    The page uses tabs to organize different types of information. The server (index.js)
+    passes in all the data (participant info, milestones, donations, events, surveys, etc.)
+    and this template organizes it into a nice dashboard interface.
+-->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -20,6 +28,7 @@
     <!-- Skip Navigation Link -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
     
+    <!-- Standard navigation bar -->
 <nav>
       <div class="nav-container">
           <div class="logo">
@@ -68,6 +77,7 @@
           <%= participant.participant_first_name %> <%=
           participant.participant_last_name %>
         </h1>
+        <!-- Show role if they're not a regular participant -->
         <% if (participant.participant_role &&
         participant.participant_role.toLowerCase() !== 'participant') { %>
         <p class="hero-subtitle">
@@ -84,7 +94,10 @@
       class="container"
       style="max-width: 1400px; margin-top: 2rem; margin-bottom: 4rem"
     >
-      <!-- Tab Navigation -->
+      <!-- 
+          Tab Navigation - Different tabs show different types of information
+          Some tabs are role-specific (participants see different tabs than admins)
+      -->
       <div class="tab-navigation">
         <button class="tab-btn active" data-tab="quickview">
           Quick View
@@ -92,24 +105,27 @@
         <button class="tab-btn" data-tab="profile">
           Personal Information
         </button>
+        <!-- Milestones tab - only for participants -->
         <% if (isLoggedIn && participant.participant_role && participant.participant_role.toLowerCase() === 'participant') { %>
         <button class="tab-btn" data-tab="milestones">Milestones</button>
         <% } %>
         <button class="tab-btn" data-tab="donations">Donations</button>
+        <!-- Impact tab - only for admins/sponsors -->
         <% if (isLoggedIn && participant.participant_role && participant.participant_role.toLowerCase() !== 'participant') { %>
         <button class="tab-btn" data-tab="impact">Impact</button>
         <% } %>
         <button class="tab-btn" data-tab="chatbot">Chatbot</button>
+        <!-- Event and survey tabs - only for participants -->
         <% if (isLoggedIn && participant.participant_role && participant.participant_role.toLowerCase() === 'participant') { %>
         <button class="tab-btn" data-tab="events">Event Registrations</button>
         <button class="tab-btn" data-tab="surveys">Survey Results</button>
         <% } %>
       </div>
 
-      <!-- Quick View Tab (Role-Based Content) -->
+      <!-- Quick View Tab - Shows dashboard with stats and quick actions -->
       <div id="quickview-tab" class="tab-content active">
         
-        <!-- PARTICIPANT QUICK VIEW -->
+        <!-- PARTICIPANT QUICK VIEW - Dashboard for regular participants -->
         <% if (participant.participant_role && participant.participant_role.toLowerCase() === 'participant') { %>
           <!-- Welcome Card -->
           <div class="dashboard-welcome-card">

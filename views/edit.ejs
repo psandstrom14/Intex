@@ -1,8 +1,17 @@
-<!--edit.ejs-->
-<!--Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom-->
-<!--This page will display add forms, and allow CRUD (for managers) + Search Capabilities.-->
-<!--This page will only be visible to users who are logged in.-->
-
+<!--
+    edit.ejs - Edit Existing Record Page
+    Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom
+    
+    This is a dynamic form page for editing existing records in the database.
+    The server (index.js) passes in table_name and info (the existing record data),
+    and this template renders a form pre-filled with the current values.
+    
+    The form can be accessed from two places:
+    1. Admin dashboard pages (uses /edit/:table/:id route)
+    2. Profile page (uses /profile-edit/:table/:id route)
+    
+    This page is admin-only (protected by requireAdmin middleware in index.js).
+-->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -17,6 +26,7 @@
     <!-- Skip Navigation Link -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
     
+    <!-- Standard navigation bar -->
  <nav>
       <div class="nav-container">
           <div class="logo">
@@ -70,10 +80,16 @@
     <main id="main-content">
     <div class="container">
         <div class="add-card">
-            <!-- Edit-Participant Form -->
+            <!-- 
+                Different forms for different tables
+                Forms are pre-filled with existing data from the 'info' object
+            -->
+            <!-- Edit User Form -->
             <% if (table_name === "users") { %>
                 <% 
-                    // Use profile-specific route if coming from profile page
+                    // Figure out which route to submit to
+                    // If coming from profile page, use profile-edit route (redirects back to profile)
+                    // Otherwise use regular edit route (redirects back to list page)
                     const formAction = (typeof fromProfile !== 'undefined' && fromProfile) 
                         ? `/profile-edit/users/${info.user_id}` 
                         : `/edit/users/${info.user_id}`;

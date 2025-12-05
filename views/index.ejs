@@ -1,5 +1,11 @@
-<!--Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom-->
-<!--This will be the home page. It will allow users to learn about ER, view donations, login, view the dashboard. Once logged in, it will add a navigation to allow users to view databases.-->
+<!--
+    index.ejs - Home Page
+    Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom
+    
+    This is the main landing page for Ella Rises. It introduces the organization,
+    shows programs, impact stats, and has calls to action. The navigation changes
+    based on whether someone is logged in and what their role is.
+-->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -11,25 +17,32 @@
     <link rel="icon" type="image/x-icon" href="/logo.ico" />
 </head>
 <body>
-    <!-- Skip Navigation Link -->
+    <!-- Skip Navigation Link - helps screen readers skip to main content -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
     
-    <!-- Navigation -->
+    <!-- 
+        Navigation Bar - Shows different links based on login status and role
+        The server passes isLoggedIn, userId, and role variables to this template
+    -->
     <nav>
         <div class="nav-container">
             <div class="logo">
                 <a href="/"><img src="/images/logo.png" alt="Ella Rises Logo"> ELLA RISES</a>
             </div>
             <ul class="nav-links">
+                <!-- Public navigation links - everyone sees these -->
                 <li><a href="/" class="selected-nav" >Home</a></li>
                 <li><a href="/about">About</a></li>
                 <li><a href="/calendar">Calendar</a></li>
                 <li><a href="/donate_now">Donate Now</a></li>
 
+                <!-- Profile link - only shows if user is logged in -->
                 <% if (isLoggedIn && userId) { %>
                     <li><a href="/profile/<%= userId %>">Profile</a></li>
                 <% } %>
 
+                <!-- Admin dropdown menu - only admins see this "Pages" dropdown -->
+                <!-- This gives admins access to all the database management pages -->
                 <% if (role === "admin") { %>
                     <li class="dropdown">
                         <span class="dropdown-toggle">
@@ -47,6 +60,7 @@
                     </li>
                 <% } %>
 
+                <!-- Login/Logout button - changes based on login status -->
                 <% if (isLoggedIn) { %>
                     <li><a href="/logout" class="login-btn">Logout</a></li>
                 <% } else { %>
@@ -312,7 +326,18 @@
 
         <div id="google_translate_element" style="display:none;"></div>
 
+        <!-- 
+            Language Selection Script
+            This handles the multi-language support using Google Translate.
+            When users select a language, we save it to their session so it persists
+            across page visits. The language preference comes from:
+            1. Google Translate cookie (if they used Google's widget)
+            2. Server session (if they used our custom dropdown)
+            3. Browser localStorage (backup)
+            4. Default to English
+        -->
         <script>
+            // Map of language codes to display names
             const LANGUAGE_NAMES = {
                 'en': '🌐 English',
                 'es': '🌐 Español',
@@ -325,59 +350,65 @@
                 'ko': '🌐 한국어'
             };
 
-            // From server-side session (res.locals.language)
+            // Get the language from the server session (set by index.js middleware)
             const SESSION_LANGUAGE = '<%= language || "en" %>';
 
-            // Initialize Google Translate widget – no extra logic here
+            // Initialize Google Translate widget - this loads Google's translation service
             function googleTranslateElementInit() {
                 new google.translate.TranslateElement({
                     pageLanguage: 'en',
                     includedLanguages: 'en,es,fr,de,pt,ar,zh-CN,ja,ko',
-                    autoDisplay: false
+                    autoDisplay: false // Don't show Google's default widget, we have our own
                 }, 'google_translate_element');
             }
 
+            // Check if Google Translate has set a cookie with language preference
             function getGoogTransLang() {
                 // Looks for cookie like: googtrans=/auto/es
                 const match = document.cookie.match(/(?:^|;)\s*googtrans=\/auto\/([^;]+)/);
                 return match ? match[1] : null;
             }
 
+            // Update the language dropdown label to show current language
             function setLanguageLabel(lang) {
                 const el = document.getElementById('currentLanguage');
                 if (!el) return;
                 el.textContent = LANGUAGE_NAMES[lang] || LANGUAGE_NAMES['en'];
             }
 
+            // Actually apply the language selection - tells Google Translate to translate the page
             function applyLanguage(lang, isInit) {
                 const combo = document.querySelector('.goog-te-combo');
                 if (!combo) {
-                    // Wait for Google widget to finish rendering
+                    // Google widget hasn't loaded yet, wait a bit and try again
                     setTimeout(() => applyLanguage(lang, isInit), 200);
                     return;
                 }
 
+                // Set the language in Google's widget
                 combo.value = lang;
                 combo.dispatchEvent(new Event('change'));
                 setLanguageLabel(lang);
 
                 if (!isInit) {
-                    // Persist to your session on the server
+                    // User just changed language - save it to server session
                     fetch('/set-language', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ lang })
                     }).catch(() => {});
-                    // Optional: localStorage helper if you want it
+                    // Also save to browser storage as backup
                     localStorage.setItem('selectedLanguage', lang);
                     toggleLanguageDropdown(false);
                 }
             }
 
+            // Called when user clicks a language in the dropdown
             function changeLanguage(lang) {
                 applyLanguage(lang, false);
             }
 
+            // Show/hide the language dropdown menu
             function toggleLanguageDropdown(forceClose) {
                 const dropdown = document.getElementById('languageDropdown');
                 if (!dropdown) return;
@@ -388,33 +419,35 @@
                 }
             }
 
+            // Close dropdown if user clicks outside of it
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('.custom-language-selector')) {
                     toggleLanguageDropdown(false);
                 }
             });
 
+            // When page loads, figure out what language to use
             document.addEventListener('DOMContentLoaded', () => {
-                // Make sure the label matches whatever we think the language is
+                // Set the label to match what we think the language is
                 setLanguageLabel(SESSION_LANGUAGE);
 
                 const cookieLang = getGoogTransLang();
                 const storedLang = localStorage.getItem('selectedLanguage');
 
-                // Priority: Google cookie > session > localStorage
+                // Priority order: Google cookie > session > localStorage > English
                 const preferred =
                     cookieLang ||
                     (SESSION_LANGUAGE && SESSION_LANGUAGE !== 'undefined' ? SESSION_LANGUAGE : null) ||
                     storedLang ||
                     'en';
 
-                // If preferred is English, just leave as-is (no translate flicker)
+                // If it's English, don't bother translating (avoids flicker)
                 if (preferred === 'en') {
                     setLanguageLabel('en');
                     return;
                 }
 
-                // Apply preferred language once widget is ready
+                // Apply the preferred language once Google's widget is ready
                 setTimeout(() => applyLanguage(preferred, true), 500);
             });
         </script>

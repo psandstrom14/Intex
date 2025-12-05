@@ -1,8 +1,15 @@
-<!--add.ejs-->
-<!--Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom-->
-<!--This page will display add forms, and allow CRUD (for managers) + Search Capabilities.-->
-<!--This page will only be visible to users who are logged in.-->
-
+<!--
+    add.ejs - Add New Record Page
+    Paris Ward, Lucas Moraes, Joshua Ethington, Parker Sandstrom
+    
+    This is a dynamic form page that works for multiple database tables.
+    The server (index.js) passes in table_name, and this template renders
+    the appropriate form based on which table we're adding to.
+    
+    Supported tables: users, events, milestones, donations, event_registrations, survey_results
+    
+    This page is admin-only (protected by requireAdmin middleware in index.js).
+-->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -17,6 +24,7 @@
     <!-- Skip Navigation Link -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
     
+    <!-- Standard navigation bar -->
  <nav>
       <div class="nav-container">
           <div class="logo">
@@ -61,6 +69,10 @@
     <!-- Hero Section -->
     <section class="hero hero-compact">
         <div class="hero-content">
+            <!-- 
+                Format the table name for display - make it look nice
+                "survey_results" becomes "Survey Response", etc.
+            -->
             <% 
                 let displayTitle;
                 if (table_name === "survey_results") {
@@ -68,6 +80,7 @@
                 } else if (table_name === "event_registrations") {
                     displayTitle = "Event Registration";
                 } else {
+                    // Capitalize first letter and remove trailing 's'
                     displayTitle = table_name.charAt(0).toUpperCase() + table_name.slice(1, -1);
                 }
             %>
@@ -80,7 +93,11 @@
     <main id="main-content">
     <div class="container">
         <div class="add-card">
-            <!-- Add-Participant Form -->
+            <!-- 
+                Different forms for different tables
+                Each table has its own form structure based on its database columns
+            -->
+            <!-- Add User Form -->
             <%if (table_name === "users"){%>
                 <form id="addForm" class="modern-form" action="/add/users" method="POST">
                     
