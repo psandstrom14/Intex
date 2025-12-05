@@ -1,10 +1,8 @@
 # Intex
 <h1>Links</h1>
-
-
 Website Link: https://ellarises-2-14.is404.net/
 
-Login functions: 
+<h1>Logins: </h1>
 
 <p>Admin</p>
 <ul>
