@@ -70,7 +70,7 @@ app.use((req, res, next) => {
 
 // Global authentication middleware - runs on EVERY request (Needed for login functionality)
 app.use((req, res, next) => {
-  // Skip authentication for specific login routes
+  // Skip authentication for specific public routes
   if (
     req.path === "/" ||
     req.path === "/index" ||
@@ -79,7 +79,9 @@ app.use((req, res, next) => {
     req.path === "/calendar" ||
     req.path === "/login" ||
     req.path === "/logout" ||
-    req.path === "/signup"
+    req.path === "/signup" ||
+    req.path === "/donate_now" ||
+    req.path === "/set-language"
   ) {
     //continue with the request path
     return next();
@@ -94,6 +96,24 @@ app.use((req, res, next) => {
     res.render("login", { error_message: "Please log in to access this page" });
   }
 });
+
+// Role-based access control middleware for admin routes
+// Use this middleware on routes that should only be accessible to admins
+// Example: app.get("/users", requireAdmin, async (req, res) => { ... });
+const requireAdmin = (req, res, next) => {
+  if (!req.session.isLoggedIn) {
+    req.session.returnTo = req.originalUrl || req.url;
+    return res.render("login", {
+      error_message: "Please log in to access this page",
+    });
+  }
+
+  if (req.session.user?.role?.toLowerCase() !== "admin") {
+    return res.status(403).send("Access denied. Admin privileges required.");
+  }
+
+  next();
+};
 
 // LOGIN PAGE:
 // Route to display login page:
@@ -625,6 +645,23 @@ app.post("/add/donations", async (req, res) => {
 app.get("/profile/:id", async (req, res) => {
   const participantId = req.params.id;
 
+  // Authorization check: participants can only view their own profile, admins and sponsors can view any
+  if (req.session.user) {
+    const userRole = req.session.user.role?.toLowerCase();
+    const userId = req.session.user.id;
+
+    // If user is not admin or sponsor, they can only view their own profile
+    if (
+      userRole !== "admin" &&
+      userRole !== "sponsor" &&
+      parseInt(participantId) !== parseInt(userId)
+    ) {
+      return res
+        .status(403)
+        .send("Access denied. You can only view your own profile.");
+    }
+  }
+
   try {
     // Get user information with total donations
     const participant = await knex("users")
@@ -1118,7 +1155,7 @@ app.post("/profile-delete/:table/:id", async (req, res) => {
 
 /* DASHBOARD PAGES */
 // USERS MAINTENANCE PAGE:
-app.get("/users", async (req, res) => {
+app.get("/users", requireAdmin, async (req, res) => {
   try {
     // flash messages + query messages
     const sessionData = req.session || {};
@@ -1271,7 +1308,7 @@ app.get("/users", async (req, res) => {
 });
 
 // PARTICIPANT MAINTENANCE PAGE:
-app.get("/participants", async (req, res) => {
+app.get("/participants", requireAdmin, async (req, res) => {
   try {
     // flash messages + query messages
     const sessionData = req.session || {};
@@ -1424,7 +1461,7 @@ app.get("/participants", async (req, res) => {
 
 // EVENT MAINTENANCE PAGE:
 // EVENT MAINTENANCE PAGE:
-app.get("/events", async (req, res) => {
+app.get("/events", requireAdmin, async (req, res) => {
   try {
     // flash messages + query messages
     const sessionData = req.session || {};
@@ -1624,7 +1661,7 @@ const SURVEY_COLUMN_MAP = {
   event_date: "e.event_date",
   survey_nps_bucket: "s.survey_nps_bucket",
 };
-app.get("/surveys", async (req, res) => {
+app.get("/surveys", requireAdmin, async (req, res) => {
   try {
     // flash messages
     const sessionData = req.session || {};
@@ -1844,7 +1881,7 @@ app.get("/surveys", async (req, res) => {
 });
 
 // MILESTONES MAINTENANCE PAGE:
-app.get("/milestones", async (req, res) => {
+app.get("/milestones", requireAdmin, async (req, res) => {
   try {
     // flash messages + query messages
     const sessionData = req.session || {};
@@ -2024,7 +2061,7 @@ app.get("/milestones", async (req, res) => {
 });
 
 // DONATIONS MAINTENANCE PAGE:
-app.get("/donations", async (req, res) => {
+app.get("/donations", requireAdmin, async (req, res) => {
   try {
     // flash messages + query messages
     const sessionData = req.session || {};
@@ -2204,7 +2241,7 @@ app.get("/donations", async (req, res) => {
 /* ADD/EDIT/DELETE FUNCTIONALITY */
 // ADD ENTRY PAGE:
 // Route that will display a completely empty form to "Add entry" (called from the database pages)
-app.get("/add/:table", async (req, res) => {
+app.get("/add/:table", requireAdmin, async (req, res) => {
   let table_name = req.params.table;
 
   // Backward compatibility: map old "participants" to "users"
@@ -2243,7 +2280,7 @@ app.get("/add/:table", async (req, res) => {
 });
 
 // Route that will display an "Add entry" form with user id filled out (called from the profile pages)
-app.get("/add/:table/:id", async (req, res) => {
+app.get("/add/:table/:id", requireAdmin, async (req, res) => {
   let table_name = req.params.table;
   const pass_id = req.params.id;
 
@@ -2283,7 +2320,7 @@ app.get("/add/:table/:id", async (req, res) => {
 });
 
 // Route that adds the form inputs to the databases
-app.post("/add/:table", async (req, res) => {
+app.post("/add/:table", requireAdmin, async (req, res) => {
   let table_name = req.params.table;
   const newData = req.body;
 
@@ -2328,7 +2365,7 @@ app.post("/add/:table", async (req, res) => {
 
 // DELETE FUNCTIONALITY:
 // route that occurs when delete button is pressed
-app.post("/delete/:table/:id", async (req, res) => {
+app.post("/delete/:table/:id", requireAdmin, async (req, res) => {
   let { table, id } = req.params;
 
   // Backward compatibility: map old "participants" to "users"
@@ -2359,7 +2396,7 @@ app.post("/delete/:table/:id", async (req, res) => {
 
 // EDIT FUNCTIONALITY
 // route to display the "edit ____" page
-app.get("/edit/:table/:id", async (req, res) => {
+app.get("/edit/:table/:id", requireAdmin, async (req, res) => {
   let table_name = req.params.table;
   const id = req.params.id;
 
@@ -2446,7 +2483,7 @@ app.get("/edit/:table/:id", async (req, res) => {
 });
 
 // Route that updates the "entry" to the databases
-app.post("/edit/:table/:id", async (req, res) => {
+app.post("/edit/:table/:id", requireAdmin, async (req, res) => {
   let table_name = req.params.table;
   const id = req.params.id;
   const updatedData = req.body;
@@ -2498,7 +2535,7 @@ app.post("/edit/:table/:id", async (req, res) => {
 });
 
 // EVENT REGISTRATIONS MAINTENANCE PAGE:
-app.get("/event_registrations", async (req, res) => {
+app.get("/event_registrations", requireAdmin, async (req, res) => {
   try {
     // flash messages + query messages
     const sessionData = req.session || {};

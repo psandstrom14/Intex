@@ -2812,6 +2812,27 @@ body {
   min-width: 130px;
 }
 
+/* Donations tab - spread two columns across the row */
+#donations-tab .table-container {
+  width: 100%;
+}
+
+#donations-tab table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+#donations-tab th:first-child,
+#donations-tab td:first-child {
+  width: 60%;
+}
+
+#donations-tab th:last-child,
+#donations-tab td:last-child {
+  width: 40%;
+  text-align: right;
+}
+
 /* ========================================
    FIX 3: GENERAL TABLE IMPROVEMENTS
    ======================================== */
@@ -2860,7 +2881,6 @@ td {
     font-size: 0.85rem;
     display: inline-block;
     margin-left: auto;
-    float: right;
     opacity: 0.8;
     pointer-events: none;
   }
