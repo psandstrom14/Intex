@@ -110,40 +110,49 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Participant Role <span class="required">*</span></label>
-                            <div class="radio-group">
-                                <label class="radio-label">
-                                    <input type="radio" name="participant_role" value="admin" 
-                                            <%= info.participant_role === 'admin' ? 'checked' : '' %> required>
-                                    <span class="radio-custom"></span>
-                                    <span class="radio-text">
-                                        <strong>Admin</strong>
-                                        <small>Full access to all features</small>
-                                    </span>
-                                </label>
-                        
-                                <label class="radio-label">
-                                    <input type="radio" name="participant_role" value="participant" 
-                                            <%= info.participant_role === 'participant' ? 'checked' : '' %> required>
-                                    <span class="radio-custom"></span>
-                                    <span class="radio-text">
-                                        <strong>Participant</strong>
-                                        <small>Standard participant access</small>
-                                    </span>
-                                </label>
-                        
-                                <label class="radio-label">
-                                    <input type="radio" name="participant_role" value="donor" 
-                                            <%= info.participant_role === 'donor' ? 'checked' : '' %> required>
-                                    <span class="radio-custom"></span>
-                                    <span class="radio-text">
-                                        <strong>Donor</strong>
-                                        <small>Donor portal access</small>
-                                    </span>
-                                </label>
+                        <% if (role === 'admin') { %>
+                            <div class="form-group">
+                                <label class="form-label">Participant Role <span class="required">*</span></label>
+                                <div class="radio-group">
+                                    <label class="radio-label">
+                                        <input type="radio" name="participant_role" value="admin" 
+                                                <%= info.participant_role === 'admin' ? 'checked' : '' %> required>
+                                        <span class="radio-custom"></span>
+                                        <span class="radio-text">
+                                            <strong>Admin</strong>
+                                            <small>Full access to all features</small>
+                                        </span>
+                                    </label>
+                            
+                                    <label class="radio-label">
+                                        <input type="radio" name="participant_role" value="participant" 
+                                                <%= info.participant_role === 'participant' ? 'checked' : '' %> required>
+                                        <span class="radio-custom"></span>
+                                        <span class="radio-text">
+                                            <strong>Participant</strong>
+                                            <small>Standard participant access</small>
+                                        </span>
+                                    </label>
+                            
+                                    <label class="radio-label">
+                                        <input type="radio" name="participant_role" value="donor" 
+                                                <%= info.participant_role === 'donor' ? 'checked' : '' %> required>
+                                        <span class="radio-custom"></span>
+                                        <span class="radio-text">
+                                            <strong>Donor</strong>
+                                            <small>Donor portal access</small>
+                                        </span>
+                                    </label>
+                                </div>
+                            </div> 
+                        <% } else { %>
+                            <!-- Non-admins cannot change role; keep value but show read-only -->
+                            <input type="hidden" name="participant_role" value="<%= info.participant_role %>">
+                            <div class="form-group">
+                                <label class="form-label">Participant Role</label>
+                                <p class="form-static"><%= info.participant_role %></p>
                             </div>
-                        </div>                        
+                        <% } %>                       
                     </div>
 
                     <div class="form-section">
